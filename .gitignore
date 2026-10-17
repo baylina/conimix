@@ -1,0 +1,8 @@
+.venv/
+data/
+__pycache__/
+*.pyc
+owner_password.txt
+public_url.txt
+ffmpeg_path.txt
+.DS_Store

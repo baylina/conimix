@@ -1,0 +1,630 @@
+<!doctype html>
+<html lang="ca">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b0b0d">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="SpotiTxell">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="/static/manifest.webmanifest">
+<link rel="icon" href="/static/icon-192.png">
+<link rel="apple-touch-icon" href="/static/icon-180.png">
+<title>SpotiTxell</title>
+<style>
+  :root {
+    color-scheme: dark;
+    --bg:#0b0b0d; --s1:#141417; --s2:#1c1c21; --s3:#26262d; --line:rgba(255,255,255,.08);
+    --fg:#f5f5f7; --mut:#9a9aa6; --acc:#1ed760; --acc-ink:#04210e; --danger:#ff6b6b;
+    --nav-h:58px; --mini-h:64px; --safe-b:env(safe-area-inset-bottom,0px); --safe-t:env(safe-area-inset-top,0px);
+    --bottom:calc(var(--nav-h) + var(--safe-b));
+  }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html { -webkit-text-size-adjust:100%; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:15px/1.35 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,system-ui,sans-serif; overscroll-behavior-y:none; }
+  button { font:inherit; color:inherit; border:0; background:none; cursor:pointer; padding:0; }
+  button:disabled { opacity:.4; cursor:default; }
+  input { font:inherit; color:inherit; }
+  svg.ic { width:22px; height:22px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; flex:none; }
+  svg.ic.f { fill:currentColor; }
+
+  /* app bar */
+  .appbar { position:sticky; top:0; z-index:20; display:flex; align-items:center; justify-content:space-between; padding:calc(10px + var(--safe-t)) 16px 10px; background:rgba(11,11,13,.82); backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px); border-bottom:1px solid var(--line); }
+  .logo { display:flex; align-items:center; gap:10px; font-weight:800; font-size:19px; letter-spacing:-.02em; }
+  .logo .mark { width:30px; height:30px; border-radius:9px; background:var(--acc); color:var(--acc-ink); display:grid; place-items:center; }
+  .logo .mark svg { width:18px; height:18px; }
+  .logo b { color:var(--acc); font-weight:800; }
+  .actions { display:flex; gap:4px; }
+  .ib { width:42px; height:42px; border-radius:50%; display:grid; place-items:center; color:var(--fg); }
+  .ib:active, .rb:active { background:var(--s3); }
+
+  main { max-width:720px; margin:0 auto; padding:6px 16px calc(var(--bottom) + 28px); min-height:70vh; }
+  h1.title { font-size:30px; font-weight:800; letter-spacing:-.03em; margin:14px 0 14px; }
+  .sec { display:flex; align-items:center; justify-content:space-between; margin:22px 0 8px; color:var(--mut); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; }
+  .link { color:var(--acc); font-weight:600; font-size:14px; text-transform:none; letter-spacing:0; padding:6px 0 6px 12px; }
+  .link.dng { color:var(--danger); }
+
+  /* search box */
+  .searchbar { display:flex; align-items:center; gap:10px; background:var(--s2); border-radius:14px; padding:0 14px; height:50px; border:1px solid transparent; margin-bottom:12px; }
+  .searchbar:focus-within { border-color:var(--acc); background:var(--s1); }
+  .searchbar svg { color:var(--mut); }
+  .searchbar input { flex:1; min-width:0; background:none; border:0; outline:0; height:100%; font-size:16px; }
+  .searchbar input::placeholder { color:var(--mut); }
+  .searchbar .x { width:30px; height:30px; display:grid; place-items:center; color:var(--mut); }
+
+  /* rows */
+  .list { display:flex; flex-direction:column; gap:2px; position:relative; }
+  .row { display:flex; align-items:center; gap:12px; padding:8px 6px; border-radius:12px; position:relative; background:var(--bg); flex-wrap:wrap; }
+  .row[data-act]:active { background:var(--s2); }
+  .row.cur { background:linear-gradient(90deg, rgba(30,215,96,.13), rgba(30,215,96,0)); }
+  .row.dim .th, .row.dim .mt .t { opacity:.55; }
+  .row.drag { z-index:5; background:var(--s3); box-shadow:0 10px 30px rgba(0,0,0,.5); transition:none !important; }
+  .list.sorting .row:not(.drag) { transition:transform .16s ease; }
+  .th { width:50px; height:50px; border-radius:8px; object-fit:cover; background:var(--s3); flex:none; }
+  .mt { flex:1; min-width:0; }
+  .t { font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .row.cur .t { color:var(--acc); }
+  .s { color:var(--mut); font-size:13px; margin-top:1px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; display:flex; gap:6px; align-items:center; }
+  .s .ok { color:var(--acc); display:inline-flex; align-items:center; gap:3px; }
+  .s .ok svg { width:13px; height:13px; stroke-width:3; }
+  .s .er { color:var(--danger); white-space:normal; }
+  .rb { width:40px; height:40px; border-radius:50%; display:grid; place-items:center; color:var(--mut); flex:none; }
+  .rb.play { background:var(--acc); color:var(--acc-ink); }
+  .rb.add { background:var(--s3); color:var(--fg); }
+  .rb.done { color:var(--acc); }
+  .grip { touch-action:none; cursor:grab; width:36px; }
+  .bar { height:3px; border-radius:2px; background:var(--s3); overflow:hidden; width:100%; margin:0 0 2px; order:9; }
+  .bar i { display:block; height:100%; background:var(--acc); transition:width .4s; }
+  .eq { display:inline-flex; gap:2px; align-items:flex-end; height:13px; margin-right:2px; }
+  .eq i { width:3px; background:var(--acc); border-radius:1px; animation:eq 1s ease-in-out infinite; }
+  .eq i:nth-child(2) { animation-delay:.2s; } .eq i:nth-child(3) { animation-delay:.4s; }
+  .eq.paused i { animation-play-state:paused; }
+  @keyframes eq { 0%,100% { height:3px } 50% { height:13px } }
+
+  /* buttons */
+  .btn { height:44px; padding:0 16px; white-space:nowrap; border-radius:999px; background:var(--s3); font-weight:600; display:inline-flex; align-items:center; justify-content:center; gap:8px; }
+  .btn.pri { background:var(--acc); color:var(--acc-ink); }
+  .btn.block { width:100%; }
+  .btn.dng { color:var(--danger); }
+  .btnrow { display:flex; gap:10px; margin:6px 0 4px; }
+  .btnrow .btn { flex:1; }
+
+  /* cards */
+  .pcard { display:flex; align-items:center; gap:14px; padding:10px 6px; border-radius:14px; width:100%; text-align:left; }
+  .pcard:active { background:var(--s2); }
+  .cover { width:58px; height:58px; border-radius:10px; background:var(--s3); display:grid; place-items:center; color:var(--mut); overflow:hidden; flex:none; }
+  .cover img { width:100%; height:100%; object-fit:cover; }
+  .cover.big { width:112px; height:112px; border-radius:14px; }
+  .phead { display:flex; gap:16px; align-items:center; margin:2px 0 16px; }
+  .phead h1 { margin:0 0 4px; font-size:26px; letter-spacing:-.03em; line-height:1.1; word-break:break-word; }
+  .back { display:inline-flex; align-items:center; gap:2px; color:var(--acc); font-weight:600; padding:6px 8px 6px 0; margin-top:8px; }
+  .back svg { width:20px; height:20px; }
+  .empty { text-align:center; color:var(--mut); padding:46px 20px; }
+  .empty svg { width:44px; height:44px; opacity:.5; margin-bottom:10px; }
+  .empty b { display:block; color:var(--fg); font-size:17px; margin-bottom:4px; }
+  .skel { height:66px; border-radius:12px; margin:4px 0; background:linear-gradient(90deg,var(--s1),var(--s2),var(--s1)); background-size:200% 100%; animation:sh 1.2s linear infinite; }
+  @keyframes sh { to { background-position:-200% 0 } }
+  .note { background:var(--s2); border-radius:12px; padding:10px 14px; color:var(--mut); font-size:13px; margin-bottom:12px; }
+
+  /* bottom: mini player + nav */
+  #mini { position:fixed; left:8px; right:8px; bottom:calc(var(--nav-h) + var(--safe-b) + 6px); z-index:30; height:var(--mini-h); border-radius:14px; background:var(--s3); display:none; align-items:center; gap:10px; padding:0 8px; box-shadow:0 8px 28px rgba(0,0,0,.45); overflow:hidden; max-width:704px; margin:0 auto; }
+  #mini.on { display:flex; }
+  #mini .th { width:46px; height:46px; }
+  #mini .mt { cursor:pointer; }
+  #mini .prog { position:absolute; left:0; bottom:0; height:2px; background:var(--acc); width:0; }
+  nav { position:fixed; left:0; right:0; bottom:0; z-index:25; height:calc(var(--nav-h) + var(--safe-b)); padding-bottom:var(--safe-b); display:flex; background:rgba(14,14,16,.92); backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px); border-top:1px solid var(--line); }
+  nav button { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; color:var(--mut); font-size:11px; font-weight:600; position:relative; }
+  nav button.on { color:var(--acc); }
+  nav .badge { position:absolute; top:6px; left:calc(50% + 6px); background:var(--acc); color:var(--acc-ink); border-radius:9px; min-width:17px; height:17px; font-size:10px; display:grid; place-items:center; padding:0 4px; }
+
+  /* sheets */
+  #backdrop { position:fixed; inset:0; z-index:60; background:rgba(0,0,0,.55); opacity:0; pointer-events:none; transition:opacity .2s; }
+  #backdrop.on { opacity:1; pointer-events:auto; }
+  #sheet { position:fixed; left:0; right:0; bottom:0; z-index:61; max-width:560px; margin:0 auto; background:var(--s2); border-radius:20px 20px 0 0; padding:8px 16px calc(16px + var(--safe-b)); transform:translateY(105%); transition:transform .24s cubic-bezier(.2,.8,.2,1); max-height:86vh; overflow:auto; }
+  #sheet.on { transform:none; }
+  #sheet .grab { width:38px; height:4px; border-radius:2px; background:var(--s3); margin:4px auto 12px; }
+  #sheet .shead { display:flex; gap:12px; align-items:center; padding:2px 0 12px; border-bottom:1px solid var(--line); margin-bottom:6px; }
+  #sheet .shead .th { width:48px; height:48px; }
+  #sheet h3 { margin:0 0 6px; font-size:18px; }
+  #sheet p { color:var(--mut); margin:0 0 14px; }
+  .opt { display:flex; align-items:center; gap:14px; width:100%; padding:13px 4px; text-align:left; border-radius:10px; }
+  .opt:active { background:var(--s3); }
+  .opt.dng { color:var(--danger); }
+  .opt small { display:block; color:var(--mut); font-size:12.5px; }
+  .opt svg { color:var(--mut); } .opt.dng svg { color:var(--danger); }
+  .sinput { width:100%; height:50px; border-radius:12px; border:1px solid var(--line); background:var(--s1); padding:0 14px; font-size:16px; margin-bottom:14px; outline:0; }
+  .sinput:focus { border-color:var(--acc); }
+
+  /* now playing */
+  #np { position:fixed; inset:0; z-index:50; background:linear-gradient(180deg,#1b2a22 0%,#0b0b0d 60%); transform:translateY(105%); transition:transform .3s cubic-bezier(.2,.8,.2,1); display:flex; flex-direction:column; padding:calc(10px + var(--safe-t)) 24px calc(24px + var(--safe-b)); }
+  #np.on { transform:none; }
+  #np .top { display:flex; justify-content:space-between; align-items:center; color:var(--mut); font-size:12px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
+  #np .art { flex:1; display:grid; place-items:center; min-height:0; padding:18px 0; }
+  #np .art img { width:min(100%, 52vh); aspect-ratio:1; object-fit:cover; border-radius:16px; box-shadow:0 20px 50px rgba(0,0,0,.55); background:var(--s3); }
+  #np h2 { font-size:22px; margin:0 0 4px; letter-spacing:-.02em; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+  #np .ch { color:var(--mut); margin-bottom:14px; }
+  input[type=range] { -webkit-appearance:none; appearance:none; width:100%; height:24px; background:none; margin:0; touch-action:none; }
+  input[type=range]::-webkit-slider-runnable-track { height:4px; border-radius:2px; background:linear-gradient(to right,var(--fg) var(--p,0%),rgba(255,255,255,.2) var(--p,0%)); }
+  input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; height:14px; border-radius:50%; background:var(--fg); margin-top:-5px; }
+  input[type=range]::-moz-range-track { height:4px; border-radius:2px; background:rgba(255,255,255,.2); }
+  input[type=range]::-moz-range-progress { height:4px; border-radius:2px; background:var(--fg); }
+  input[type=range]::-moz-range-thumb { width:14px; height:14px; border:0; border-radius:50%; background:var(--fg); }
+  .times { display:flex; justify-content:space-between; color:var(--mut); font-size:12px; margin-top:-2px; }
+  .ctrls { display:flex; align-items:center; justify-content:center; gap:34px; margin:16px 0 8px; }
+  .ctrls .big { width:72px; height:72px; border-radius:50%; background:var(--fg); color:#000; display:grid; place-items:center; }
+  .ctrls .big svg { width:30px; height:30px; }
+  .ctrls .sm { width:52px; height:52px; display:grid; place-items:center; border-radius:50%; }
+  .ctrls .sm svg { width:28px; height:28px; }
+
+  #toast { position:fixed; left:50%; transform:translate(-50%,20px); bottom:calc(var(--bottom) + 16px); background:#f5f5f7; color:#111; padding:10px 18px; border-radius:999px; font-weight:600; font-size:14px; opacity:0; pointer-events:none; transition:.25s; z-index:90; max-width:90vw; box-shadow:0 8px 24px rgba(0,0,0,.4); text-align:center; }
+  #toast.on { opacity:1; transform:translate(-50%,0); }
+
+  /* login */
+  .login { max-width:360px; margin:9vh auto 0; text-align:center; }
+  .login .mark { width:72px; height:72px; border-radius:20px; background:var(--acc); color:var(--acc-ink); display:grid; place-items:center; margin:0 auto 18px; }
+  .login .mark svg { width:38px; height:38px; }
+  .login h1 { font-size:28px; letter-spacing:-.03em; margin:0 0 4px; }
+  .login p.sub { color:var(--mut); margin:0 0 26px; }
+  .login .field { text-align:left; display:grid; gap:14px; }
+  .chk { display:flex; align-items:center; gap:10px; color:var(--mut); }
+  .chk input { width:20px; height:20px; accent-color:var(--acc); }
+  .qr { text-align:center; padding:6px 0 4px; }
+  .qr img { width:min(70vw,260px); background:#fff; border-radius:14px; padding:10px; }
+  .qr code { display:block; word-break:break-all; color:var(--mut); font-size:12.5px; margin:10px 0 4px; }
+  @media (min-width:700px) { #mini { left:calc(50% - 352px); right:auto; width:704px; } }
+</style>
+</head>
+<body>
+<header class="appbar">
+  <div class="logo"><span class="mark" id="logoMark"></span><span>Spoti<b>Txell</b></span></div>
+  <div class="actions"><button class="ib" id="qrBtn" aria-label="Jam session"></button><button class="ib" id="outBtn" aria-label="Tanca la sessió"></button></div>
+</header>
+<main id="main"></main>
+
+<div id="mini"><div class="prog" id="mProg"></div>
+  <img class="th" id="mArt" alt=""><div class="mt" id="mInfo"><div class="t" id="mTitle"></div><div class="s" id="mSub"></div></div>
+  <button class="rb" id="mPlay" aria-label="Reprodueix / pausa"></button><button class="rb" id="mNext" aria-label="Següent"></button>
+</div>
+<nav id="nav"></nav>
+
+<section id="np" aria-hidden="true">
+  <div class="top"><button class="ib" id="npClose" aria-label="Tanca"></button><span>Ara sona</span><span style="width:42px"></span></div>
+  <div class="art"><img id="npArt" alt=""></div>
+  <h2 id="npTitle"></h2><div class="ch" id="npSub"></div>
+  <input type="range" id="seek" min="0" max="1000" value="0">
+  <div class="times"><span id="tCur">0:00</span><span id="tDur">0:00</span></div>
+  <div class="ctrls"><button class="sm" id="npQueue" aria-label="Cua"></button><button class="big" id="npPlay" aria-label="Reprodueix / pausa"></button><button class="sm" id="npNext" aria-label="Següent"></button></div>
+</section>
+
+<div id="backdrop"></div><div id="sheet" role="dialog"></div>
+<div id="toast"></div>
+<video id="ns" muted loop playsinline src="/static/nosleep.mp4" style="position:fixed;width:1px;height:1px;opacity:.01;pointer-events:none;left:0;top:0"></video>
+<audio id="audio" preload="auto"></audio><audio id="audio2" preload="auto"></audio>
+
+<script>
+const GUEST = location.pathname.startsWith('/jam');
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt = s => { if (!s && s !== 0) return ''; s = Math.round(s); const h = s/3600|0, m = (s%3600)/60|0, x = s%60;
+  return (h ? h+':'+String(m).padStart(2,'0') : m)+':'+String(x).padStart(2,'0'); };
+const fmtLong = s => { if (s < 60) return `${Math.round(s)} s`; const m = Math.round(s/60); return m >= 60 ? `${m/60|0} h ${m%60} min` : `${m} min`; };
+
+// ---------- icons ----------
+const P = {
+  search:'<circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>', play:'<path d="M6 4l14 8-14 8z"/>', pause:'<path d="M7 4h3v16H7zM14 4h3v16h-3z"/>',
+  next:'<path d="M5 4l10 8-10 8z"/><path d="M19 5v14"/>', more:'<circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/>',
+  plus:'<path d="M12 5v14M5 12h14"/>', trash:'<path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v6M14 11v6"/>',
+  queue:'<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>', lists:'<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>',
+  down:'<path d="M6 9l6 6 6-6"/>', right:'<path d="M9 18l6-6-6-6"/>', left:'<path d="M15 18l-6-6 6-6"/>',
+  grip:'<circle cx="9" cy="6" r="1.5"/><circle cx="15" cy="6" r="1.5"/><circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/><circle cx="9" cy="18" r="1.5"/><circle cx="15" cy="18" r="1.5"/>',
+  x:'<path d="M18 6L6 18M6 6l12 12"/>', check:'<path d="M20 6L9 17l-5-5"/>', qr:'<path d="M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h3v3h-3zM20 14v.01M14 20h.01M20 20h.01M17 17h3v3"/>',
+  out:'<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>', edit:'<path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>',
+  music:'<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>', folder:'<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
+};
+const FILLED = new Set(['play','pause','next','grip','more']);
+const I = (n, cls='') => `<svg class="ic ${FILLED.has(n)?'f ':''}${cls}" viewBox="0 0 24 24">${P[n]}</svg>`;
+
+// ---------- state ----------
+let S = {songs:{}, playlists:[], queue:[], current:null, jam_url:''}, lastSig = '', dragging = false;
+let tab = GUEST ? 'search' : 'queue', openPl = null;
+const SQ = {q:'', res:[], loading:false, err:''};   // search tab
+const PQ = {q:'', res:[], loading:false, err:''};   // search inside a playlist
+const TABS = GUEST ? [['search','Cerca','search'],['queue','Cua','queue']] : [['search','Cerca','search'],['queue','Cua','queue'],['lists','Llistes','lists']];
+
+// ---------- api / toast ----------
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('on'), 2600); }
+async function api(path, method = 'GET', body) {
+  const r = await fetch(path, {method, headers:{'Content-Type':'application/json'}, body: body ? JSON.stringify(body) : undefined});
+  const j = await r.json().catch(() => ({}));
+  if (r.status === 401 && !GUEST && path !== '/api/login') { showLogin(); throw new Error('login'); }
+  if (!r.ok) { toast(j.error || 'Error'); throw new Error(j.error); }
+  return j;
+}
+async function act(path, method, body) { try { const r = await api(path, method, body); lastSig = ''; await poll(); return r; } catch { lastSig = ''; await poll(); return null; } }
+let pollSeq = 0;
+async function poll() {
+  const my = ++pollSeq; let st; try { st = await (await fetch('/api/state', {cache:'no-store'})).json(); } catch { return; }
+  if (my !== pollSeq) return;
+  const sig = JSON.stringify(st);
+  if (sig === lastSig) return; lastSig = sig; S = st;
+  syncPlayer(); if (!dragging) render();
+}
+
+// ---------- sheets ----------
+let sheetDone = null;
+function openSheet(html) { $('#sheet').innerHTML = `<div class="grab"></div>${html}`; $('#backdrop').classList.add('on'); $('#sheet').classList.add('on'); }
+function closeSheet(v = null) { $('#backdrop').classList.remove('on'); $('#sheet').classList.remove('on'); const d = sheetDone; sheetDone = null; if (d) d(v); }
+$('#backdrop').onclick = () => closeSheet(null);
+$('#sheet').onclick = e => { const o = e.target.closest('[data-v]'); if (o) closeSheet(o.dataset.v); };
+function menu({title, sub, thumb, items}) {
+  return new Promise(res => {
+    sheetDone = res;
+    openSheet(`${title ? `<div class="shead">${thumb ? `<img class="th" src="${esc(thumb)}" alt="" onerror="this.style.display='none'">` : ''}<div class="mt"><div class="t">${esc(title)}</div>${sub ? `<div class="s">${esc(sub)}</div>` : ''}</div></div>` : ''}
+      ${items.map(o => `<button class="opt ${o.danger?'dng':''}" data-v="${esc(o.v)}">${I(o.icon||'right')}<span>${esc(o.label)}${o.sub ? `<small>${esc(o.sub)}</small>` : ''}</span></button>`).join('')}`);
+  });
+}
+function ask({title, text, ok = 'Confirma', danger}) {
+  return new Promise(res => {
+    sheetDone = v => res(v === 'ok');
+    openSheet(`<h3>${esc(title)}</h3><p>${esc(text || '')}</p><div class="btnrow"><button class="btn" data-v="">Cancel·la</button><button class="btn ${danger?'dng':'pri'}" data-v="ok">${esc(ok)}</button></div>`);
+  });
+}
+function input({title, value = '', ok = 'Desa', ph = ''}) {
+  return new Promise(res => {
+    sheetDone = res;
+    openSheet(`<h3>${esc(title)}</h3><input class="sinput" id="sin" value="${esc(value)}" placeholder="${esc(ph)}" maxlength="80" enterkeyhint="done"><div class="btnrow"><button class="btn" data-v="">Cancel·la</button><button class="btn pri" id="sok">${esc(ok)}</button></div>`);
+    const f = () => { const v = $('#sin').value.trim(); closeSheet(v || null); };
+    $('#sok').onclick = f; $('#sin').onkeydown = e => { if (e.key === 'Enter') f(); };
+    setTimeout(() => { $('#sin').focus(); $('#sin').select(); }, 260);
+  });
+}
+async function pickPlaylist(title = 'Afegeix a una llista') {
+  const items = S.playlists.map(p => ({v:'p'+p.id, icon:'lists', label:p.name, sub:`${p.songs.length} cançons`})).concat([{v:'new', icon:'plus', label:'Nova llista…'}]);
+  const v = await menu({title, items}); if (!v) return null;
+  if (v === 'new') { const name = await input({title:'Nova llista', ph:'Nom de la llista', ok:'Crea'}); if (!name) return null; return (await api('/api/playlists','POST',{name})).id; }
+  return +v.slice(1);
+}
+
+// ---------- views ----------
+const hasCurrent = () => S.current != null;
+const thumbOf = id => `/media/${id}.jpg`;
+const thumbImg = (id, cls = 'th') => `<img class="${cls}" src="${thumbOf(id)}" alt="" loading="lazy" onerror="this.onerror=null;this.src='https://i.ytimg.com/vi/${id}/mqdefault.jpg'">`;
+function statusBits(s) {
+  if (!s) return {sub:'', bar:''};
+  if (s.status === 'downloading') return {sub:`<span>Descarregant ${Math.round(s.progress)}%</span>`, bar:`<div class="bar"><i style="width:${s.progress}%"></i></div>`};
+  if (s.status === 'error') return {sub:`<span class="er">No s'ha pogut descarregar</span>`, bar:''};
+  return {sub:`<span class="ok">${I('check')}Descarregada</span>`, bar:''};
+}
+function empty(icon, title, text) { return `<div class="empty">${I(icon)}<b>${title}</b>${text}</div>`; }
+function searchBox(ctx, st, ph) {
+  return `<form class="searchbar" data-ctx="${ctx}">${I('search')}<input type="search" data-keep="q-${ctx}" placeholder="${ph}" value="${esc(st.q)}" enterkeyhint="search" autocomplete="off" autocapitalize="off" spellcheck="false">${st.q ? `<button type="button" class="x" data-act="sclear" data-ctx="${ctx}" aria-label="Esborra">${I('x')}</button>` : ''}</form>`;
+}
+function resultRows(st, ctx, pl) {
+  if (st.loading) return '<div class="skel"></div><div class="skel"></div><div class="skel"></div><div class="skel"></div>';
+  if (st.err) return `<div class="note" style="color:var(--danger)">${esc(st.err)}</div>`;
+  return `<div class="list">${st.res.map((r, i) => {
+    const s = S.songs[r.id]; const sb = s ? statusBits(s) : null;
+    const inList = ctx === 'pl' && pl && pl.songs.includes(r.id);
+    let right;
+    if (ctx === 'pl') right = inList ? `<span class="rb done">${I('check')}</span>` : `<button class="rb add" data-act="pladdres" data-i="${i}" aria-label="Afegeix a la llista">${I('plus')}</button>`;
+    else right = GUEST ? `<button class="rb add" data-act="rmore" data-i="${i}" aria-label="Afegeix">${I('plus')}</button>`
+      : `<button class="rb play" data-act="rplay" data-i="${i}" aria-label="Reprodueix ara">${I('play')}</button><button class="rb" data-act="rmore" data-i="${i}" aria-label="Més opcions">${I('more')}</button>`;
+    const act = ctx === 'pl' ? (inList ? '' : 'pladdres') : 'rmore';
+    return `<div class="row" ${act ? `data-act="${act}" data-i="${i}"` : ''}>
+      <img class="th" src="${esc(r.thumbnail)}" alt="" loading="lazy"><div class="mt"><div class="t">${esc(r.title)}</div><div class="s"><span>${esc(r.channel)} · ${fmt(r.duration)}</span></div>${sb ? `<div class="s">${sb.sub}</div>` : ''}</div>${right}${sb ? sb.bar : ''}</div>`;
+  }).join('')}</div>`;
+}
+
+function viewSearch() {
+  const body = SQ.loading || SQ.err || SQ.res.length ? resultRows(SQ, 'main') : empty('search', 'Cerca música', GUEST ? 'Troba una cançó i afegeix-la a la cua.' : "Escriu el nom d'una cançó o d'un artista.<br>Només sona quan la descàrrega és al 100%.");
+  return `<h1 class="title">${GUEST ? 'Jam session' : 'Cerca'}</h1>${searchBox('main', SQ, 'Cançons, artistes o vídeos')}${body}`;
+}
+
+function qRow(q, idx) {
+  const s = S.songs[q.song_id] || {}; const ready = s.status === 'ready'; const cur = q.qid === S.current; const sb = statusBits(s);
+  return `<div class="row ${cur ? 'cur' : ''} ${ready ? '' : 'dim'}" data-sid="${q.qid}" ${!GUEST && ready ? `data-act="qplay" data-qid="${q.qid}"` : ''}>
+    ${thumbImg(q.song_id)}<div class="mt"><div class="t">${esc(s.title)}</div>
+    <div class="s">${cur ? `<span class="eq ${audio.paused ? 'paused' : ''}"><i></i><i></i><i></i></span>` : ''}<span>${esc(s.channel)}</span>${ready ? '' : sb.sub}</div></div>
+    ${GUEST ? '' : `<button class="rb" data-act="qmore" data-qid="${q.qid}" aria-label="Més opcions">${I('more')}</button>`}
+    ${idx <= curIdx() ? `<span class="rb" style="opacity:.18" title="Està sonant: no es pot moure">${I('grip')}</span>` : `<button class="rb grip" aria-label="Arrossega per canviar l'ordre">${I('grip')}</button>`}${ready ? '' : sb.bar}</div>`;
+}
+const curIdx = () => S.queue.findIndex(q => q.qid === S.current);
+function viewQueue() {
+  const n = S.queue.length;
+  return `<h1 class="title">Cua</h1>
+    <div class="sec"><span>${n} ${n === 1 ? 'cançó' : 'cançons'}</span>${GUEST || !n ? '' : '<button class="link dng" data-act="qclear">Buida la cua</button>'}</div>
+    ${n ? `<div class="list sortlist" data-kind="queue">${S.queue.map((q, i) => qRow(q, i)).join('')}</div>` : empty('queue', 'La cua és buida', 'Cerca una cançó o carrega una llista.')}`;
+}
+
+const orphans = () => Object.values(S.songs).filter(s => s.status !== 'error' && !S.playlists.some(p => p.songs.includes(s.id)));
+const firstReady = pl => pl.songs.find(id => S.songs[id]?.status === 'ready');
+function viewLists() {
+  if (openPl === 'orphans') return viewOrphans();
+  const pl = S.playlists.find(p => p.id === openPl);
+  if (pl) return viewPlaylist(pl);
+  openPl = null;
+  const orph = orphans();
+  return `<h1 class="title">Llistes</h1>
+    <button class="btn pri block" data-act="plnew">${I('plus')}Nova llista</button>
+    <div class="list" style="margin-top:10px">${S.playlists.map(p => { const c = firstReady(p); return `<button class="pcard" data-act="plopen" data-id="${p.id}"><div class="cover">${c ? thumbImg(c, '') : I('music')}</div><div class="mt"><div class="t">${esc(p.name)}</div><div class="s">${p.songs.length} ${p.songs.length === 1 ? 'cançó' : 'cançons'}</div></div>${I('right')}</button>`; }).join('')}
+    ${orph.length ? `<button class="pcard" data-act="plorph"><div class="cover">${I('folder')}</div><div class="mt"><div class="t">Sense llista</div><div class="s">${orph.length} ${orph.length === 1 ? 'cançó descarregada' : 'cançons descarregades'}</div></div>${I('right')}</button>` : ''}</div>
+    ${S.playlists.length || orph.length ? '' : empty('lists', 'Cap llista encara', 'Crea la primera i afegeix-hi cançons cercant-les.')}`;
+}
+function viewPlaylist(pl) {
+  const total = pl.songs.reduce((a, id) => a + (S.songs[id]?.duration || 0), 0);
+  const ready = pl.songs.filter(id => S.songs[id]?.status === 'ready').length;
+  const rows = pl.songs.map(id => {
+    const s = S.songs[id] || {}; const sb = statusBits(s); const isReady = s.status === 'ready';
+    return `<div class="row ${isReady ? '' : 'dim'}" data-sid="${id}">${thumbImg(id)}<div class="mt"><div class="t">${esc(s.title)}</div>
+      <div class="s"><span>${esc(s.channel)} · ${fmt(s.duration)}</span>${isReady ? '' : sb.sub}</div></div>
+      <button class="rb" data-act="pmore" data-id="${id}" aria-label="Més opcions">${I('more')}</button>
+      <button class="rb grip" aria-label="Arrossega per canviar l'ordre">${I('grip')}</button>${isReady ? '' : sb.bar}</div>`;
+  }).join('');
+  const searching = PQ.loading || PQ.err || PQ.res.length; const c = firstReady(pl);
+  return `<button class="back" data-act="plback">${I('left')}Llistes</button>
+    <div class="phead"><div class="cover big">${c ? thumbImg(c, '') : I('music')}</div>
+      <div class="mt"><h1>${esc(pl.name)}</h1><div class="s">${pl.songs.length} ${pl.songs.length === 1 ? 'cançó' : 'cançons'}${total ? ' · ' + fmtLong(total) : ''}</div></div>
+      <button class="rb" data-act="plmenu" aria-label="Opcions de la llista">${I('more')}</button></div>
+    <div class="btnrow"><button class="btn pri" data-act="plplay" ${ready ? '' : 'disabled'}>${I('play')}Reprodueix</button><button class="btn" data-act="pladdq" ${pl.songs.length ? '' : 'disabled'}>${I('queue')}A la cua</button></div>
+    <div class="sec"><span>Afegeix cançons</span></div>
+    ${searchBox('pl', PQ, 'Cerca una cançó per afegir-la a la llista')}
+    ${searching ? `<div class="sec"><span>Resultats</span><button class="link" data-act="sclear" data-ctx="pl">Tanca</button></div>${resultRows(PQ, 'pl', pl)}` : ''}
+    <div class="sec"><span>Cançons de la llista</span></div>
+    ${pl.songs.length ? `<div class="list sortlist" data-kind="pl" data-pid="${pl.id}">${rows}</div>` : empty('music', 'Llista buida', 'Cerca una cançó a dalt i quedarà al final de la llista.')}`;
+}
+function viewOrphans() {
+  const orph = orphans();
+  return `<button class="back" data-act="plback">${I('left')}Llistes</button><h1 class="title">Sense llista</h1>
+    <div class="note">Cançons descarregades que no són a cap llista. Afegeix-les a una llista o esborra-les per alliberar espai.</div>
+    ${orph.length ? `<div class="list">${orph.map(s => { const sb = statusBits(s); return `<div class="row">${thumbImg(s.id)}<div class="mt"><div class="t">${esc(s.title)}</div><div class="s"><span>${esc(s.channel)} · ${fmt(s.duration)}</span>${s.status === 'ready' ? '' : sb.sub}</div></div>
+      <button class="rb" data-act="omore" data-id="${s.id}" aria-label="Més opcions">${I('more')}</button>${s.status === 'ready' ? '' : sb.bar}</div>`; }).join('')}</div>` : empty('check', 'Tot en ordre', 'Totes les cançons són a alguna llista.')}`;
+}
+
+function renderNav() {
+  const qn = S.queue.length;
+  $('#nav').innerHTML = TABS.map(([k, label, icon]) => `<button data-tab="${k}" class="${tab === k ? 'on' : ''}" aria-label="${label}">${I(icon)}${k === 'queue' && qn ? `<span class="badge">${qn}</span>` : ''}<span>${label}</span></button>`).join('');
+}
+function render() {
+  if (document.body.dataset.login) return;
+  const main = $('#main');
+  const ae = document.activeElement; const keep = ae?.dataset?.keep; const sel = keep ? [ae.selectionStart, ae.selectionEnd] : null;
+  main.innerHTML = tab === 'search' ? viewSearch() : tab === 'queue' ? viewQueue() : viewLists();
+  if (keep) { const el = main.querySelector(`[data-keep="${keep}"]`); if (el) { el.focus(); try { el.setSelectionRange(...sel); } catch {} } }
+  renderNav(); renderPlayer();
+}
+
+// ---------- search ----------
+async function runSearch(ctx, q) {
+  const st = ctx === 'pl' ? PQ : SQ; st.q = q;
+  if (!q) { st.res = []; st.err = ''; return render(); }
+  st.loading = true; st.err = ''; st.res = []; render();
+  try { st.res = await api('/api/search?q=' + encodeURIComponent(q)); if (!st.res.length) st.err = 'Cap resultat'; } catch (e) { st.err = e.message; }
+  st.loading = false; render();
+}
+document.addEventListener('submit', e => {
+  const f = e.target.closest('.searchbar'); if (!f) return; e.preventDefault();
+  const inp = f.querySelector('input'); inp.blur(); runSearch(f.dataset.ctx, inp.value.trim());
+});
+document.addEventListener('input', e => { const k = e.target.dataset?.keep; if (k === 'q-main') SQ.q = e.target.value; if (k === 'q-pl') PQ.q = e.target.value; });
+
+// ---------- actions ----------
+const metaOf = r => ({video_id:r.id, title:r.title, channel:r.channel, duration:r.duration});
+function songMenu({title, sub, thumb, ready, extra = []}) {
+  const items = [];
+  if (!GUEST && ready) items.push({v:'now', icon:'play', label:'Reprodueix ara'});
+  if (hasCurrent()) items.push({v:'next', icon:'next', label:"Reprodueix després de l'actual"});
+  items.push({v:'end', icon:'queue', label:'Afegeix al final de la cua'});
+  return menu({title, sub, thumb, items: items.concat(extra)});
+}
+async function requestResult(r, mode) {
+  await act('/api/request', 'POST', {...metaOf(r), mode});
+  toast(mode === 'now' ? 'Reproduint…' : mode === 'next' ? "Sonarà després de l'actual" : 'Afegida al final de la cua');
+}
+function listAddToast(x) { toast(x.already ? 'Ja era a la llista' : x.had_download ? 'Afegida a la llista (ja la tenies descarregada)' : 'Afegida al final de la llista'); }
+$('#main').addEventListener('click', async e => {
+  const el = e.target.closest('[data-act]'); if (!el) return;
+  const d = el.dataset, pl = S.playlists.find(p => p.id === openPl);
+  switch (d.act) {
+    case 'sclear': { const st = d.ctx === 'pl' ? PQ : SQ; st.q = ''; st.res = []; st.err = ''; render(); break; }
+    case 'rplay': await requestResult(SQ.res[+d.i], 'now'); break;
+    case 'rmore': {
+      const r = SQ.res[+d.i]; const have = S.songs[r.id]?.status === 'ready';
+      const extra = GUEST ? [] : [{v:'list', icon:'lists', label:'Afegeix a una llista…', sub: have ? 'Ja la tens descarregada' : ''}];
+      const v = await songMenu({title:r.title, sub:r.channel, thumb:r.thumbnail, ready:true, extra});
+      if (v === 'list') { const pid = await pickPlaylist(); if (pid) { const x = await act(`/api/playlists/${pid}/request`, 'POST', metaOf(r)); if (x) listAddToast(x); } }
+      else if (v) await requestResult(r, v);
+      break; }
+    case 'pladdres': { const x = await act(`/api/playlists/${pl.id}/request`, 'POST', metaOf(PQ.res[+d.i])); if (x) listAddToast(x); break; }
+    case 'qplay': if (!e.target.closest('.rb')) await act('/api/queue/play', 'POST', {qid:+d.qid}); break;
+    case 'qmore': { const q = S.queue.find(x => x.qid === +d.qid); const s = S.songs[q.song_id];
+      const v = await menu({title:s.title, sub:s.channel, thumb:thumbOf(s.id), items:[...(s.status === 'ready' ? [{v:'play', icon:'play', label:'Reprodueix ara'}] : []), {v:'rm', icon:'trash', label:'Treu de la cua', danger:true}]});
+      if (v === 'play') await act('/api/queue/play', 'POST', {qid:q.qid}); else if (v === 'rm') await act('/api/queue/remove', 'POST', {qid:q.qid}); break; }
+    case 'qclear': if (await ask({title:'Buidar la cua?', text:'Es treuran totes les cançons de la cua. Les descàrregues es mantenen.', ok:'Buida', danger:true})) await act('/api/queue/clear', 'POST'); break;
+    case 'plnew': { const name = await input({title:'Nova llista', ph:'Nom de la llista', ok:'Crea'}); if (name) { const r = await act('/api/playlists', 'POST', {name}); if (r) { openPl = r.id; render(); } } break; }
+    case 'plopen': openPl = +d.id; PQ.q = ''; PQ.res = []; PQ.err = ''; render(); scrollTo(0, 0); break;
+    case 'plorph': openPl = 'orphans'; render(); scrollTo(0, 0); break;
+    case 'plback': openPl = null; render(); break;
+    case 'plmenu': { const v = await menu({title:pl.name, items:[{v:'ren', icon:'edit', label:'Canvia el nom'}, {v:'del', icon:'trash', label:'Esborra la llista', sub:'Les cançons descarregades es mantenen', danger:true}]});
+      if (v === 'ren') { const name = await input({title:'Canvia el nom', value:pl.name}); if (name) await act('/api/playlists/' + pl.id, 'PATCH', {name}); }
+      else if (v === 'del' && await ask({title:`Esborrar «${pl.name}»?`, text:'Les cançons descarregades es mantenen a «Sense llista».', ok:'Esborra', danger:true})) { await act('/api/playlists/' + pl.id, 'DELETE'); openPl = null; render(); } break; }
+    case 'plplay': await act('/api/queue/load', 'POST', {playlist_id:pl.id, mode:'replace'}); toast(`Reproduint «${pl.name}»`); break;
+    case 'pladdq': await act('/api/queue/load', 'POST', {playlist_id:pl.id, mode:'append'}); toast('Llista afegida a la cua'); break;
+    case 'pmore': { const s = S.songs[d.id];
+      const v = await songMenu({title:s.title, sub:s.channel, thumb:thumbOf(s.id), ready:s.status === 'ready', extra:[{v:'rm', icon:'trash', label:'Treu de la llista', danger:true}]});
+      if (v === 'rm') {
+        const other = S.playlists.some(p => p.id !== pl.id && p.songs.includes(s.id));
+        if (!other && !await ask({title:'Treure la cançó?', text:"No és a cap altra llista: també s'esborrarà la descàrrega.", ok:'Treu i esborra', danger:true})) break;
+        await act(`/api/playlists/${pl.id}/songs/${s.id}`, 'DELETE');
+      } else if (v) { await act('/api/queue/add', 'POST', {song_id:s.id, mode:v}); toast('Afegida a la cua'); } break; }
+    case 'omore': { const s = S.songs[d.id];
+      const v = await songMenu({title:s.title, sub:s.channel, thumb:thumbOf(s.id), ready:s.status === 'ready', extra:[{v:'list', icon:'lists', label:'Afegeix a una llista…'}, {v:'del', icon:'trash', label:'Esborra la descàrrega', danger:true}]});
+      if (v === 'list') { const pid = await pickPlaylist(); if (pid) { await act(`/api/playlists/${pid}/songs`, 'POST', {song_ids:[s.id]}); toast('Afegida a la llista'); } }
+      else if (v === 'del') { if (await ask({title:'Esborrar la descàrrega?', text:'Desapareixerà també de la cua.', ok:'Esborra', danger:true})) await act('/api/songs/' + s.id, 'DELETE'); }
+      else if (v) { await act('/api/queue/add', 'POST', {song_id:s.id, mode:v}); toast('Afegida a la cua'); } break; }
+  }
+});
+$('#nav').onclick = e => { const b = e.target.closest('[data-tab]'); if (!b) return; if (b.dataset.tab === tab && tab === 'lists') openPl = null; tab = b.dataset.tab; render(); scrollTo(0, 0); };
+
+// ---------- drag to reorder (queue and playlists) ----------
+$('#main').addEventListener('pointerdown', e => {
+  const h = e.target.closest('.grip'); if (!h) return;
+  const list = h.closest('.sortlist'), row = h.closest('.row'); if (!list || !row) return;
+  e.preventDefault(); h.setPointerCapture(e.pointerId); dragging = true;
+  const rows = [...list.querySelectorAll(':scope > .row')], from = rows.indexOf(row);
+  const rects = rows.map(r => r.getBoundingClientRect()); const step = rects[1] ? rects[1].top - rects[0].top : rects[0].height;
+  const y0 = e.clientY; let to = from; row.classList.add('drag'); list.classList.add('sorting');
+  const move = ev => {
+    const dy = ev.clientY - y0; row.style.transform = `translateY(${dy}px)`;
+    const center = rects[from].top + rects[from].height / 2 + dy;
+    to = rects.reduce((n, r, i) => center > r.top + r.height / 2 ? i : n, 0);
+    if (list.dataset.kind === 'queue') to = Math.max(to, curIdx() + 1);   // never in front of the song that is playing
+    rows.forEach((r, i) => { if (r === row) return; r.style.transform = from < to && i > from && i <= to ? `translateY(${-step}px)` : from > to && i < from && i >= to ? `translateY(${step}px)` : ''; });
+  };
+  const up = async () => {
+    h.removeEventListener('pointermove', move); h.removeEventListener('pointerup', up); h.removeEventListener('pointercancel', up);
+    const ids = rows.map(r => r.dataset.sid); const [m] = ids.splice(from, 1); ids.splice(to, 0, m);
+    dragging = false;
+    if (to === from) { rows.forEach(r => r.style.transform = ''); row.classList.remove('drag'); list.classList.remove('sorting'); return; }
+    if (list.dataset.kind === 'queue') { S.queue = ids.map(id => S.queue.find(q => String(q.qid) === id)); render(); await act('/api/queue/order', 'POST', {ids: ids.map(Number)}); }
+    else { const pl = S.playlists.find(p => p.id === +list.dataset.pid); pl.songs = ids; render(); await act(`/api/playlists/${pl.id}/order`, 'POST', {ids}); }
+  };
+  h.addEventListener('pointermove', move); h.addEventListener('pointerup', up); h.addEventListener('pointercancel', up);
+});
+
+// ---------- header ----------
+$('#logoMark').innerHTML = I('music'); $('#qrBtn').innerHTML = I('qr'); $('#outBtn').innerHTML = I('out');
+$('#qrBtn').onclick = () => {
+  sheetDone = () => {};
+  openSheet(`<h3 style="text-align:center">Jam session</h3><div class="qr"><img src="/api/qr.svg?u=${encodeURIComponent(S.jam_url)}" alt="Codi QR"><code>${esc(S.jam_url)}</code>
+    <p style="margin:6px 0 0">Qui l'escanegi podrà cercar cançons, afegir-les a la cua i canviar-ne l'ordre.</p></div><div class="btnrow"><button class="btn" data-v="">Tanca</button></div>`);
+};
+$('#outBtn').onclick = async () => { await fetch('/api/logout', {method:'POST', headers:{'Content-Type':'application/json'}, body:'{}'}); location.reload(); };
+if (GUEST) { $('#qrBtn').hidden = true; $('#outBtn').hidden = true; }
+
+// ---------- player (two elements, crossfade between songs) ----------
+const a1 = $('#audio'), a2 = $('#audio2'); let audio = a1;
+let loaded = null, wl = null, seeking = false, fadeState = null, fadeTimer = null, pendingAdvance = false, xfKey = null;
+const XFADE = 4;   // seconds of overlap between consecutive songs
+const VOL_OK = (() => { try { const a = new Audio(); a.volume = .5; return a.volume === .5; } catch { return false; } })();   // false on iOS: no fade, but gapless
+const SILENT = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';
+document.addEventListener('pointerdown', () => {   // unlock the idle element for later playback (mobile autoplay rules)
+  for (const el of [a1, a2]) if (!el.getAttribute('src')) { el.muted = true; el.src = SILENT; el.play().then(() => { el.pause(); }).catch(() => {}).finally(() => { el.muted = false; if (el.getAttribute('src') === SILENT) el.removeAttribute('src'); }); }
+}, {once:true});
+const other = el => el === a1 ? a2 : a1;
+function songOfQ(qid) { const q = S.queue.find(x => x.qid === qid); return q && S.songs[q.song_id]; }
+function nextReadyQid() {   // same rule as the server: first fully downloaded item after the current one
+  const i = curIdx(); for (let k = i + 1; k < S.queue.length; k++) if (S.songs[S.queue[k].song_id]?.status === 'ready') return S.queue[k].qid;
+  return null;
+}
+function setMeta(qid) {
+  const q = S.queue.find(x => x.qid === qid), s = q && S.songs[q.song_id];
+  if ('mediaSession' in navigator && s) navigator.mediaSession.metadata = new MediaMetadata({title:s.title, artist:s.channel || '', artwork:[{src:thumbOf(s.id)}]});
+}
+function finishFade() {
+  clearInterval(fadeTimer); fadeTimer = null;
+  if (fadeState) { const {old, nu} = fadeState; fadeState = null; old.pause(); old.removeAttribute('src'); old.volume = 1; nu.volume = 1; }
+}
+function startOn(el, qid) {
+  const q = S.queue.find(x => x.qid === qid); el.src = `/media/${q.song_id}.mp3`; setMeta(qid);
+  return el.play().catch(() => toast('Toca ▶ per començar a reproduir'));
+}
+// Start `qid` on the idle element. dur>0: equal-power crossfade; natural: let the old one run out (iOS); otherwise cut the old one.
+function crossfadeTo(qid, dur, natural) {
+  finishFade();
+  const old = audio, nu = other(old); loaded = qid; audio = nu;
+  const fade = dur > 0 && VOL_OK; nu.volume = fade ? 0 : 1;
+  startOn(nu, qid);
+  if (fade) {
+    fadeState = {old, nu}; const t0 = performance.now();
+    fadeTimer = setInterval(() => {
+      const p = Math.min(1, (performance.now() - t0) / (dur * 1000));
+      old.volume = Math.cos(p * Math.PI / 2); nu.volume = Math.sin(p * Math.PI / 2);
+      if (p >= 1) finishFade();
+    }, 40);
+  } else if (natural) setTimeout(() => { if (old !== audio) { old.pause(); old.removeAttribute('src'); } }, 1200);
+  else { old.pause(); old.removeAttribute('src'); }
+}
+function syncPlayer() {
+  if (GUEST || pendingAdvance || S.current === loaded) return;
+  const prev = loaded; loaded = S.current;
+  if (loaded == null) { finishFade(); audio.pause(); audio.removeAttribute('src'); audio.load(); releaseAwake(); return; }
+  if (prev != null && !audio.paused && audio.getAttribute('src')) crossfadeTo(loaded, 1.2, false);   // manual jump: short fade
+  else { finishFade(); audio.volume = 1; startOn(audio, loaded); }
+}
+function maybeCrossfade() {   // near the end of a song, start the next one underneath so there is no silence
+  if (fadeState || pendingAdvance || xfKey === loaded || !audio.duration || audio.paused) return;
+  const lead = VOL_OK ? Math.min(XFADE, audio.duration / 3) : 0.4;
+  if (audio.duration - audio.currentTime > lead) return;
+  xfKey = loaded; const nq = nextReadyQid(); if (nq == null) return;
+  const from = S.current; pendingAdvance = true; crossfadeTo(nq, VOL_OK ? lead : 0, true);
+  act('/api/queue/next', 'POST', {from}).finally(() => { pendingAdvance = false; syncPlayer(); });
+}
+function renderPlayer() {
+  const s = songOfQ(S.current); const on = !!s;
+  $('#mini').classList.toggle('on', on);
+  document.documentElement.style.setProperty('--bottom', `calc(var(--nav-h) + var(--safe-b) + ${on ? 78 : 0}px)`);
+  if (!on) { closeNP(); return; }
+  const q = S.queue.find(x => x.qid === S.current);
+  if ($('#mArt').dataset.id !== q.song_id) { $('#mArt').dataset.id = q.song_id; $('#mArt').src = thumbOf(q.song_id); $('#npArt').src = thumbOf(q.song_id); }
+  $('#mTitle').textContent = s.title; $('#mSub').textContent = s.channel || ''; $('#npTitle').textContent = s.title; $('#npSub').textContent = s.channel || '';
+  const ic = I(audio.paused ? 'play' : 'pause');
+  $('#mPlay').innerHTML = ic; $('#npPlay').innerHTML = ic; $('#mNext').innerHTML = I('next'); $('#npNext').innerHTML = I('next'); $('#npQueue').innerHTML = I('queue'); $('#npClose').innerHTML = I('down');
+  $('#mPlay').hidden = $('#mNext').hidden = GUEST;
+}
+const togglePlay = () => audio.paused ? audio.play() : audio.pause();
+const skip = () => act('/api/queue/next', 'POST', {from: S.current});
+$('#mPlay').onclick = togglePlay; $('#npPlay').onclick = togglePlay; $('#mNext').onclick = skip; $('#npNext').onclick = skip;
+function openNP() { if (GUEST) return; $('#np').classList.add('on'); $('#np').setAttribute('aria-hidden', 'false'); }
+function closeNP() { $('#np').classList.remove('on'); $('#np').setAttribute('aria-hidden', 'true'); }
+$('#mInfo').onclick = openNP; $('#mArt').onclick = openNP; $('#npClose').onclick = closeNP;
+$('#npQueue').onclick = () => { closeNP(); tab = 'queue'; render(); scrollTo(0, 0); };
+$('#seek').addEventListener('input', e => { seeking = true; const p = e.target.value / 10; e.target.style.setProperty('--p', p + '%'); if (audio.duration) $('#tCur').textContent = fmt(audio.duration * p / 100); });
+$('#seek').addEventListener('change', e => { if (audio.duration) audio.currentTime = audio.duration * e.target.value / 1000; seeking = false; });
+for (const el of [a1, a2]) {   // events of the element that is fading out are ignored
+  el.addEventListener('timeupdate', () => {
+    if (el !== audio || !audio.duration) return; const p = audio.currentTime / audio.duration * 100;
+    $('#mProg').style.width = p + '%';
+    if (!seeking) { $('#seek').value = p * 10; $('#seek').style.setProperty('--p', p + '%'); $('#tCur').textContent = fmt(audio.currentTime); }
+    $('#tDur').textContent = fmt(audio.duration); maybeCrossfade();
+  });
+  el.addEventListener('ended', () => { if (el === audio && !pendingAdvance) act('/api/queue/next', 'POST', {from: loaded}); });
+  el.addEventListener('error', () => { if (el === audio && loaded != null && el.getAttribute('src') && el.getAttribute('src') !== SILENT) { toast('No es pot reproduir aquesta cançó, la salto'); act('/api/queue/next', 'POST', {from: loaded}); } });
+  el.addEventListener('play', () => { if (el !== audio) return; renderPlayer(); requestAwake(); document.querySelectorAll('.eq').forEach(x => x.classList.remove('paused')); });
+  el.addEventListener('pause', () => { if (el !== audio) return; if (fadeState) fadeState.old.pause(); renderPlayer(); if (!el.ended) releaseAwake(); document.querySelectorAll('.eq').forEach(x => x.classList.add('paused')); });
+}
+async function requestAwake() {   // keep the phone awake while playing
+  if ('wakeLock' in navigator) { try { wl = await navigator.wakeLock.request('screen'); wl.addEventListener('release', () => wl = null); return; } catch {} }
+  $('#ns').play().catch(() => {});   // plain http fallback: silent looping video
+}
+function releaseAwake() { try { wl?.release(); } catch {} wl = null; $('#ns').pause(); }
+document.addEventListener('visibilitychange', () => { if (!document.hidden && !audio.paused) requestAwake(); });
+if ('mediaSession' in navigator && !GUEST) {
+  navigator.mediaSession.setActionHandler('play', () => audio.play()); navigator.mediaSession.setActionHandler('pause', () => audio.pause());
+  navigator.mediaSession.setActionHandler('nexttrack', skip);
+}
+
+// ---------- login / boot ----------
+let timer = null;
+function showLogin() {
+  clearInterval(timer); document.body.dataset.login = '1'; audio.pause();
+  ['#mini', '#nav'].forEach(s => $(s).style.display = 'none'); $('#qrBtn').hidden = $('#outBtn').hidden = true;
+  $('#main').innerHTML = `<form class="login" id="lf"><div class="mark">${I('music')}</div><h1>SpotiTxell</h1><p class="sub">Inicia la sessió per gestionar la teva música</p>
+    <div class="field"><input type="text" value="propietari" autocomplete="username" hidden>
+    <div class="searchbar" style="margin:0"><input type="password" id="pw" placeholder="Contrasenya" autocomplete="current-password" required></div>
+    <label class="chk"><input type="checkbox" id="rem" checked><span>Recorda'm en aquest dispositiu</span></label>
+    <button class="btn pri block">Entra</button><div id="lerr" class="s" style="color:var(--danger);justify-content:center;white-space:normal"></div>
+    <p class="s" style="justify-content:center;white-space:normal;margin:6px 0 0">Només vols afegir cançons? <a href="/jam" style="color:var(--acc);margin-left:4px">Entra a la jam</a></p></div></form>`;
+  $('#lf').onsubmit = async e => {
+    e.preventDefault(); $('#lerr').textContent = '';
+    const r = await fetch('/api/login', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({password:$('#pw').value, remember:$('#rem').checked})});
+    if (r.ok) location.reload(); else $('#lerr').textContent = (await r.json().catch(() => ({}))).error || 'Error';
+  };
+}
+(async () => {
+  if (!GUEST) { const me = await (await fetch('/api/me')).json().catch(() => ({})); if (!me.owner) return showLogin(); }
+  render(); await poll(); timer = setInterval(poll, 1500);
+})();
+</script>
+</body>
+</html>
