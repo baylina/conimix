@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""SpotiTxell: personal audio library with a shared play queue ("jam").
+"""coniMIX: personal audio library with a shared play queue ("jam").
 
 Search YouTube, download audio with yt-dlp + ffmpeg, play only fully
 downloaded songs, manage playlists. Single user, runs on the local network.
@@ -19,6 +19,7 @@ import subprocess
 import sys
 import threading
 import time
+import unicodedata
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
@@ -76,6 +77,7 @@ CREATE TABLE IF NOT EXISTS queue(
   song_id TEXT REFERENCES songs(id) ON DELETE CASCADE, pos INTEGER);
 CREATE TABLE IF NOT EXISTS state(k TEXT PRIMARY KEY, v TEXT);
 CREATE TABLE IF NOT EXISTS sessions(token_hash TEXT PRIMARY KEY, expires REAL);
+CREATE TABLE IF NOT EXISTS guest_sessions(token_hash TEXT PRIMARY KEY, epoch INTEGER, expires REAL);
 """)
 db.execute("UPDATE songs SET status='error', error='Interromput' WHERE status='downloading'")
 lock = threading.RLock()
@@ -94,6 +96,13 @@ def rate_ok(key, limit, window):
         recent.append(now)
         hits[key] = recent
         return True
+
+
+def fail_count(key, window):
+    now = time.time()
+    with lock:
+        hits[key] = [t for t in hits.get(key, []) if now - t < window]
+        return len(hits[key]), (window - (now - hits[key][0]) if hits[key] else 0)
 
 
 def new_session(days):
@@ -274,8 +283,8 @@ def request_song(meta):
     return sid
 
 
-def run_search(query, limit=12):
-    out = subprocess.run([*YTDLP, *YTDLP_ARGS, "--no-update", "--flat-playlist", "--dump-json", f"ytsearch{limit}:{query}"],
+def _yt_list(target, limit):
+    out = subprocess.run([*YTDLP, *YTDLP_ARGS, "--no-update", "--flat-playlist", "--dump-json", "--playlist-end", str(limit), target],
                          capture_output=True, text=True, timeout=60, **NO_WINDOW)
     res = []
     for line in out.stdout.splitlines():
@@ -287,9 +296,50 @@ def run_search(query, limit=12):
             res.append({"id": d["id"], "title": d.get("title"), "channel": d.get("channel") or d.get("uploader"),
                         "duration": d.get("duration"),
                         "thumbnail": f"https://i.ytimg.com/vi/{d['id']}/mqdefault.jpg"})
-    if not res and out.returncode != 0:
-        raise HttpError(502, (out.stderr.strip().splitlines() or ["Error de cerca"])[-1])
-    return res
+    return res, out
+
+
+_search_cache: dict = {}
+
+
+def run_search(query, limit=14):
+    """Broad search: regular YouTube (has artist and duration) plus YouTube Music songs
+    (official tracks, tolerant to typos). Both run in parallel and are merged without duplicates."""
+    key = " ".join(query.lower().split())
+    hit = _search_cache.get(key)
+    if hit and time.time() - hit[0] < 600:
+        return hit[1]
+    got = {}
+
+    def job(name, target, n):
+        try:
+            got[name] = _yt_list(target, n)
+        except Exception as e:  # noqa: BLE001
+            got[name] = ([], e)
+    from urllib.parse import quote_plus
+    threads = [threading.Thread(target=job, args=("yt", f"ytsearch{limit}:{query}", limit)),
+               threading.Thread(target=job, args=("ytm", f"https://music.youtube.com/search?q={quote_plus(query)}#songs", 8))]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+    yt, ytm = got.get("yt", ([], None))[0], got.get("ytm", ([], None))[0]
+    for r in ytm:
+        r["channel"] = r["channel"] or "YouTube Music"
+        r["source"] = "ytm"
+    merged, seen = [], set()
+    for r in ytm[:4] + yt + ytm[4:]:   # a few official tracks first, then the rest
+        if r["id"] not in seen:
+            seen.add(r["id"])
+            merged.append(r)
+    if not merged:
+        err = got.get("yt", (None, None))[1]
+        msg = getattr(err, "stderr", "") or ""
+        raise HttpError(502, (msg.strip().splitlines() or ["Error de cerca"])[-1])
+    if len(_search_cache) > 300:
+        _search_cache.clear()
+    _search_cache[key] = (time.time(), merged)
+    return merged
 
 
 # ---------- state ----------
@@ -310,12 +360,75 @@ def lan_ip():
     return _lan["ip"]
 
 
-def jam_url(host_header):
+GUEST_HOURS = 12
+
+
+def state_get(k):
+    r = db.execute("SELECT v FROM state WHERE k=?", (k,)).fetchone()
+    return r["v"] if r else None
+
+
+def state_set(k, v):
+    db.execute("INSERT INTO state(k,v) VALUES(?,?) ON CONFLICT(k) DO UPDATE SET v=excluded.v", (k, str(v)))
+
+
+def jam_code():
+    """(code, epoch). The code goes in the QR; the epoch invalidates every guest session when bumped."""
+    with lock:
+        code, epoch = state_get("jam_code"), state_get("jam_epoch")
+        if not code:
+            code = secrets.token_urlsafe(9)
+            state_set("jam_code", code)
+        if not epoch:
+            epoch = "1"
+            state_set("jam_epoch", epoch)
+    return code, int(epoch)
+
+
+def jam_rotate(kick):
+    """New QR code (old photos of the QR stop working). kick=True also ends every guest session."""
+    with lock:
+        state_set("jam_code", secrets.token_urlsafe(9))
+        if kick:   # a new jam: everybody from the previous party is out
+            state_set("jam_epoch", jam_code()[1] + 1)
+            state_set("jam_started", time.time())
+            db.execute("DELETE FROM guest_sessions")
+
+
+def new_guest():
+    token = secrets.token_urlsafe(32)
+    with lock:
+        db.execute("DELETE FROM guest_sessions WHERE expires<?", (time.time(),))
+        db.execute("INSERT INTO guest_sessions VALUES(?,?,?)",
+                   (hashlib.sha256(token.encode()).hexdigest(), jam_code()[1], time.time() + GUEST_HOURS * 3600))
+    return token
+
+
+def valid_guest(token):
+    if not token:
+        return False
+    with lock:
+        r = db.execute("SELECT epoch, expires FROM guest_sessions WHERE token_hash=?",
+                       (hashlib.sha256(token.encode()).hexdigest(),)).fetchone()
+    return bool(r and r["expires"] > time.time() and r["epoch"] == jam_code()[1])
+
+
+def guest_count():
+    with lock:
+        return db.execute("SELECT COUNT(*) FROM guest_sessions WHERE epoch=? AND expires>?",
+                          (jam_code()[1], time.time())).fetchone()[0]
+
+
+def base_url(host_header):
     if PUBLIC_URL:
-        return PUBLIC_URL + "/jam"
+        return PUBLIC_URL
     name = (host_header or "").split(":")[0]
     host = host_header if name not in ("", "localhost", "127.0.0.1") else f"{lan_ip()}:{PORT}"
-    return f"http://{host}/jam"
+    return f"http://{host}"
+
+
+def jam_url(host_header):
+    return f"{base_url(host_header)}/jam?k={jam_code()[0]}"
 
 
 def full_state(host_header, owner=True):
@@ -327,20 +440,21 @@ def full_state(host_header, owner=True):
         inq = {q["song_id"] for q in queue}
         songs = {k: v for k, v in songs.items() if k in inq}
         return {"songs": songs, "playlists": [], "queue": queue, "current": get_current(),
-                "jam_url": jam_url(host_header), "owner": False}
+                "owner": False}   # never the jam code: only the QR carries it
     playlists = []
     for p in db.execute("SELECT * FROM playlists ORDER BY name COLLATE NOCASE"):
         sids = [r["song_id"] for r in db.execute(
             "SELECT song_id FROM playlist_songs WHERE playlist_id=? ORDER BY pos", (p["id"],))]
         playlists.append({"id": p["id"], "name": p["name"], "songs": sids})
     return {"songs": songs, "playlists": playlists, "queue": queue, "current": get_current(),
-            "jam_url": jam_url(host_header), "owner": True}
+            "jam_url": jam_url(host_header), "guests": guest_count(),
+            "jam_started": float(state_get("jam_started") or 0), "owner": True}
 
 
 # ---------- HTTP ----------
 
 class Handler(BaseHTTPRequestHandler):
-    server_version = "SpotiTxell/1.0"
+    server_version = "coniMIX/1.0"
 
     def log_message(self, *a):
         pass
@@ -419,15 +533,18 @@ class Handler(BaseHTTPRequestHandler):
     def secure(self):
         return self.client_address[0] in ("127.0.0.1", "::1") and self.headers.get("X-Forwarded-Proto") == "https"
 
-    def session_token(self):
+    def cookie_val(self, name):
         for part in (self.headers.get("Cookie") or "").split(";"):
             k, _, v = part.strip().partition("=")
-            if k == "st_session":
+            if k == name:
                 return v
         return ""
 
-    def cookie(self, value, max_age):
-        flags = f"st_session={value}; Path=/; HttpOnly; SameSite=Lax; Max-Age={max_age}"
+    def session_token(self):
+        return self.cookie_val("st_session")
+
+    def cookie(self, value, max_age, name="st_session"):
+        flags = f"{name}={value}; Path=/; HttpOnly; SameSite=Lax; Max-Age={max_age}"
         return flags + ("; Secure" if self.secure() else "")
 
     def route(self, method):
@@ -440,12 +557,22 @@ class Handler(BaseHTTPRequestHandler):
             raise HttpError(415, "Content-Type no vàlid")  # blocks cross-site form posts
 
         if path == "/api/login" and method == "POST":
-            if not rate_ok(("login", ip), 5, 600):
-                raise HttpError(429, "Massa intents. Torna-ho a provar d'aquí una estona.")
+            n, wait = fail_count(("login", ip), 600)   # only wrong passwords count
+            if n >= 8:
+                raise HttpError(429, f"Massa intents fallits. Torna-ho a provar d'aquí {int(wait // 60) + 1} min.")
             d = self.body()
-            if not PASSWORD or not hmac.compare_digest(str(d.get("password", "")).encode(), PASSWORD.encode()):
+            given = str(d.get("password", ""))
+            norm = lambda x: unicodedata.normalize("NFKC", x).strip()   # tolerate stray spaces / composed characters from phone keyboards
+            if not PASSWORD or not hmac.compare_digest(norm(given).encode(), norm(PASSWORD).encode()):
+                with lock:
+                    hits.setdefault(("login", ip), []).append(time.time())
+                # diagnostics only: lengths and a case hint, never the password itself
+                print(f"login failed from {ip} ({n + 1} recent) typed_len={len(given)} expected_len={len(norm(PASSWORD))} "
+                      f"differs_only_by_case={norm(given).casefold() == norm(PASSWORD).casefold()} ua={(self.headers.get('User-Agent') or '')[:60]!r}", flush=True)
                 time.sleep(1)
                 raise HttpError(401, "Contrasenya incorrecta")
+            with lock:
+                hits.pop(("login", ip), None)
             remember = bool(d.get("remember"))
             token = new_session(SESSION_DAYS if remember else 1)
             body = json.dumps({"ok": True}).encode()
@@ -467,16 +594,33 @@ class Handler(BaseHTTPRequestHandler):
             self.send_header("Set-Cookie", self.cookie("", 0))
             self.end_headers()
             return self.wfile.write(body)
+        in_jam = owner or valid_guest(self.cookie_val("cm_guest"))
         if path == "/api/me":
-            return self.send_json({"owner": owner})
+            return self.send_json({"owner": owner, "guest": in_jam})
+        if path == "/api/jam/join" and method == "POST":   # the QR code exchanges into a guest session
+            n, wait = fail_count(("join", ip), 600)
+            if n >= 20:
+                raise HttpError(429, "Massa intents. Torna-ho a provar d'aquí una estona.")
+            code = str(self.body().get("k", ""))
+            if not hmac.compare_digest(code.encode(), jam_code()[0].encode()):
+                with lock:
+                    hits.setdefault(("join", ip), []).append(time.time())
+                raise HttpError(403, "Aquest codi ja no és vàlid. Torna a escanejar el QR de la festa.")
+            body = b'{"ok":true}'
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(body)))
+            self.send_header("Set-Cookie", self.cookie(new_guest(), GUEST_HOURS * 3600, "cm_guest"))
+            self.end_headers()
+            return self.wfile.write(body)
 
-        # Anyone may: open the pages, see the shared queue, search, and request songs (/api/request).
-        # Everything else needs the owner session.
-        public = (method == "GET" and (path in ("/", "/jam", "/api/state", "/api/search") or path.startswith("/static/"))) \
-            or (method == "POST" and path in ("/api/request", "/api/queue/order")) \
-            or (method == "GET" and MEDIA_RE.match(path[7:] if path.startswith("/media/") else "") and path.endswith(".jpg"))
-        if not public and not owner:
-            raise HttpError(401, "Cal iniciar sessió")
+        # Pages and static files are public. Jam guests (who scanned the current QR) may see the shared
+        # queue, search, preview, request songs and reorder the queue. Everything else is owner only.
+        if not ((method == "GET" and (path in ("/", "/jam") or path.startswith("/static/")))):
+            jam_ok = (method == "GET" and (path in ("/api/state", "/api/search", "/api/songs") or path.startswith("/media/"))) \
+                or (method == "POST" and path in ("/api/request", "/api/queue/order", "/api/prefetch"))
+            if not owner and not (jam_ok and in_jam):
+                raise HttpError(401, "Cal escanejar el codi QR de la festa" if jam_ok else "Cal iniciar sessió")
         guest = not owner
 
         if method == "GET":
@@ -502,9 +646,14 @@ class Handler(BaseHTTPRequestHandler):
                     return self.send_json(full_state(self.headers.get("Host"), owner))
             if path == "/api/search":
                 q = parse_qs(url.query).get("q", [""])[0].strip()[:150]
-                if guest and not rate_ok(("search", ip), 15, 300):
+                if guest and not rate_ok(("search", ip), 40, 300):
                     raise HttpError(429, "Massa cerques seguides, espera una mica")
                 return self.send_json(run_search(q) if q else [])
+            if path == "/api/songs":   # download status of a few songs (search results)
+                ids = [i for i in parse_qs(url.query).get("ids", [""])[0].split(",") if ID_RE.match(i)][:40]
+                with lock:
+                    rows = db.execute(f"SELECT id,status,progress FROM songs WHERE id IN ({','.join('?' * len(ids))})", ids).fetchall() if ids else []
+                return self.send_json({r["id"]: {"status": r["status"], "progress": r["progress"]} for r in rows})
             if path == "/api/qr.svg":
                 import qrcode
                 import qrcode.image.svg
@@ -535,6 +684,14 @@ class Handler(BaseHTTPRequestHandler):
                 sid = request_song(data)
                 add_to_queue(sid, mode)
                 return self.send_json({"ok": True})
+            if path == "/api/jam/rotate":   # owner: new QR code; optionally expel every guest
+                jam_rotate(bool(data.get("kick")))
+                return self.send_json({"ok": True})
+            if path == "/api/prefetch":   # download only (for a preview), without queueing
+                if guest and not rate_ok(("pre", ip), 15, 600):
+                    raise HttpError(429, "Massa descàrregues seguides, espera una mica")
+                sid = request_song(data)
+                return self.send_json({"ok": True, "status": db.execute("SELECT status FROM songs WHERE id=?", (sid,)).fetchone()["status"]})
             if path == "/api/queue/add":
                 add_to_queue(data.get("song_id", ""), data.get("mode", "end"))
                 return self.send_json({"ok": True})
@@ -546,7 +703,11 @@ class Handler(BaseHTTPRequestHandler):
                                (data.get("qid"),)).fetchone()
                 if not r or r["status"] != "ready":
                     raise HttpError(409, "La cançó encara no s'ha descarregat")
-                set_current(data["qid"])
+                qid, cur = data["qid"], get_current()
+                if cur is not None and cur != qid:
+                    db.execute("DELETE FROM queue WHERE qid=?", (cur,))
+                renumber([qid] + [i["qid"] for i in q_items() if i["qid"] != qid])
+                set_current(qid)
                 return self.send_json({"ok": True})
             if path == "/api/queue/order":
                 if guest and not rate_ok(("order", ip), 60, 60):
@@ -654,5 +815,5 @@ if __name__ == "__main__":
     if sys.stdout is None or sys.stderr is None:  # started with pythonw: no console, log to a file
         _log = open(DATA / "server.log", "a", buffering=1, encoding="utf-8")
         sys.stdout = sys.stderr = _log
-    print(f"Dades: {DATA}\nPlayer: http://{lan_ip()}:{PORT}   Jam: {jam_url(None)}")
+    print(f"coniMIX · dades: {DATA}\nAmfitrió: http://{lan_ip()}:{PORT}", flush=True)
     ThreadingHTTPServer(("0.0.0.0", PORT), Handler).serve_forever()

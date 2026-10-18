@@ -6,12 +6,12 @@
 <meta name="theme-color" content="#0b0b0d">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="SpotiTxell">
+<meta name="apple-mobile-web-app-title" content="coniMIX">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="manifest" href="/static/manifest.webmanifest">
 <link rel="icon" href="/static/icon-192.png">
 <link rel="apple-touch-icon" href="/static/icon-180.png">
-<title>SpotiTxell</title>
+<title>coniMIX</title>
 <style>
   :root {
     color-scheme: dark;
@@ -23,6 +23,7 @@
   * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
   html { -webkit-text-size-adjust:100%; }
   body { margin:0; background:var(--bg); color:var(--fg); font:15px/1.35 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,system-ui,sans-serif; overscroll-behavior-y:none; }
+  [hidden] { display:none !important; }
   button { font:inherit; color:inherit; border:0; background:none; cursor:pointer; padding:0; }
   button:disabled { opacity:.4; cursor:default; }
   input { font:inherit; color:inherit; }
@@ -32,13 +33,20 @@
   /* app bar */
   .appbar { position:sticky; top:0; z-index:20; display:flex; align-items:center; justify-content:space-between; padding:calc(10px + var(--safe-t)) 16px 10px; background:rgba(11,11,13,.82); backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px); border-bottom:1px solid var(--line); }
   .logo { display:flex; align-items:center; gap:10px; font-weight:800; font-size:19px; letter-spacing:-.02em; }
-  .logo .mark { width:30px; height:30px; border-radius:9px; background:var(--acc); color:var(--acc-ink); display:grid; place-items:center; }
-  .logo .mark svg { width:18px; height:18px; }
-  .logo b { color:var(--acc); font-weight:800; }
+  .logo .mark { width:36px; height:36px; border-radius:50%; object-fit:cover; background:#fff; box-shadow:0 0 0 2px var(--acc); }
+  .logo b { background:linear-gradient(90deg,#29b6ff,#7ed957,#ff8a2b); -webkit-background-clip:text; background-clip:text; color:transparent; font-weight:900; }
   .actions { display:flex; gap:4px; }
   .ib { width:42px; height:42px; border-radius:50%; display:grid; place-items:center; color:var(--fg); }
   .ib:active, .rb:active { background:var(--s3); }
 
+  /* jam (guest) look: indigo + pink so it is obvious you are not the host */
+  :root[data-mode=jam] { --bg:#0f0a1f; --s1:#171030; --s2:#20173f; --s3:#2e2358; --acc:#ff6bd6; --acc-ink:#2b0626; --line:rgba(255,255,255,.1); }
+  :root[data-mode=jam] body { background:radial-gradient(1200px 500px at 50% -10%, #2a1458 0%, var(--bg) 60%) fixed; }
+  :root[data-mode=jam] .appbar { background:rgba(15,10,31,.82); }
+  :root[data-mode=jam] .row { background:transparent; }
+  .jambar { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:9px 16px; background:linear-gradient(90deg,#3a1b73,#6a1f66); border-bottom:1px solid var(--line); font-size:13px; }
+  .jambar span { color:#f0e6ff; line-height:1.25; }
+  .jambar .jbtn { flex:none; background:var(--acc); color:var(--acc-ink); font-weight:700; padding:8px 14px; border-radius:999px; text-decoration:none; font-size:13px; white-space:nowrap; }
   main { max-width:720px; margin:0 auto; padding:6px 16px calc(var(--bottom) + 28px); min-height:70vh; }
   h1.title { font-size:30px; font-weight:800; letter-spacing:-.03em; margin:14px 0 14px; }
   .sec { display:flex; align-items:center; justify-content:space-between; margin:22px 0 8px; color:var(--mut); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; }
@@ -51,6 +59,7 @@
   .searchbar svg { color:var(--mut); }
   .searchbar input { flex:1; min-width:0; background:none; border:0; outline:0; height:100%; font-size:16px; }
   .searchbar input::placeholder { color:var(--mut); }
+  .searchbar input::-webkit-search-cancel-button, .searchbar input::-webkit-search-decoration { -webkit-appearance:none; appearance:none; display:none; }
   .searchbar .x { width:30px; height:30px; display:grid; place-items:center; color:var(--mut); }
 
   /* rows */
@@ -144,12 +153,14 @@
   #np .art img { width:min(100%, 52vh); aspect-ratio:1; object-fit:cover; border-radius:16px; box-shadow:0 20px 50px rgba(0,0,0,.55); background:var(--s3); }
   #np h2 { font-size:22px; margin:0 0 4px; letter-spacing:-.02em; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
   #np .ch { color:var(--mut); margin-bottom:14px; }
-  input[type=range] { -webkit-appearance:none; appearance:none; width:100%; height:24px; background:none; margin:0; touch-action:none; }
-  input[type=range]::-webkit-slider-runnable-track { height:4px; border-radius:2px; background:linear-gradient(to right,var(--fg) var(--p,0%),rgba(255,255,255,.2) var(--p,0%)); }
-  input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; height:14px; border-radius:50%; background:var(--fg); margin-top:-5px; }
-  input[type=range]::-moz-range-track { height:4px; border-radius:2px; background:rgba(255,255,255,.2); }
-  input[type=range]::-moz-range-progress { height:4px; border-radius:2px; background:var(--fg); }
-  input[type=range]::-moz-range-thumb { width:14px; height:14px; border:0; border-radius:50%; background:var(--fg); }
+  /* seek bars: big thumb and a tall touch area so it is easy to grab with a finger */
+  input[type=range] { -webkit-appearance:none; appearance:none; width:100%; height:40px; background:none; margin:0; touch-action:none; cursor:pointer; }
+  input[type=range]::-webkit-slider-runnable-track { height:6px; border-radius:3px; background:linear-gradient(to right,var(--acc) var(--p,0%),rgba(255,255,255,.2) var(--p,0%)); }
+  input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:26px; height:26px; border-radius:50%; background:#fff; margin-top:-10px; box-shadow:0 2px 8px rgba(0,0,0,.45), 0 0 0 4px rgba(30,215,96,.25); }
+  input[type=range]:active::-webkit-slider-thumb { transform:scale(1.15); }
+  input[type=range]::-moz-range-track { height:6px; border-radius:3px; background:rgba(255,255,255,.2); }
+  input[type=range]::-moz-range-progress { height:6px; border-radius:3px; background:var(--acc); }
+  input[type=range]::-moz-range-thumb { width:26px; height:26px; border:0; border-radius:50%; background:#fff; box-shadow:0 2px 8px rgba(0,0,0,.45), 0 0 0 4px rgba(30,215,96,.25); }
   .times { display:flex; justify-content:space-between; color:var(--mut); font-size:12px; margin-top:-2px; }
   .ctrls { display:flex; align-items:center; justify-content:center; gap:34px; margin:16px 0 8px; }
   .ctrls .big { width:72px; height:72px; border-radius:50%; background:var(--fg); color:#000; display:grid; place-items:center; }
@@ -162,8 +173,7 @@
 
   /* login */
   .login { max-width:360px; margin:9vh auto 0; text-align:center; }
-  .login .mark { width:72px; height:72px; border-radius:20px; background:var(--acc); color:var(--acc-ink); display:grid; place-items:center; margin:0 auto 18px; }
-  .login .mark svg { width:38px; height:38px; }
+  .login .brand { width:min(64vw,230px); aspect-ratio:1; border-radius:28px; object-fit:cover; display:block; margin:0 auto 16px; box-shadow:0 14px 40px rgba(0,0,0,.45); }
   .login h1 { font-size:28px; letter-spacing:-.03em; margin:0 0 4px; }
   .login p.sub { color:var(--mut); margin:0 0 26px; }
   .login .field { text-align:left; display:grid; gap:14px; }
@@ -172,20 +182,47 @@
   .qr { text-align:center; padding:6px 0 4px; }
   .qr img { width:min(70vw,260px); background:#fff; border-radius:14px; padding:10px; }
   .qr code { display:block; word-break:break-all; color:var(--mut); font-size:12.5px; margin:10px 0 4px; }
-  @media (min-width:700px) { #mini { left:calc(50% - 352px); right:auto; width:704px; } }
+  .searchbar .go { width:38px; height:38px; border-radius:50%; background:var(--acc); display:grid; place-items:center; flex:none; margin-right:-6px; }
+  .searchbar .go svg { color:var(--acc-ink); width:18px; height:18px; stroke-width:2.6; }
+  .hint { color:var(--mut); font-size:12.5px; margin:-4px 4px 12px; }
+  /* swipe rows (owner): slide left to reveal actions */
+  .row.swipe { display:block; padding:0; overflow:hidden; }
+  .row.swipe.cur { background:none; }
+  .row.swipe > .rin { display:flex; flex-wrap:wrap; align-items:center; gap:12px; padding:8px 6px; background:var(--bg); border-radius:12px; position:relative; z-index:1; transition:transform .22s cubic-bezier(.2,.8,.2,1); touch-action:pan-y; user-select:none; -webkit-user-select:none; }
+  .row.swipe.cur > .rin { background:linear-gradient(90deg, rgba(30,215,96,.13), rgba(30,215,96,0)), var(--bg); }
+  .sacts { position:absolute; top:0; right:0; bottom:0; display:flex; border-radius:12px; overflow:hidden; }
+  .sacts button { width:88px; font-size:11.5px; white-space:nowrap; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; color:#fff; font-size:12px; font-weight:700; }
+  .sacts svg { width:20px; height:20px; }
+  .sacts .sp { background:#17a34a; } .sacts .sr { background:#e04848; }
+  /* now playing card at the top of the queue */
+  .npcard { background:var(--s2); border-radius:16px; padding:12px 12px 8px; margin:0 0 4px; }
+  .npcard .top { display:flex; gap:12px; align-items:center; margin-bottom:6px; }
+  .npcard .th { width:56px; height:56px; }
+  .npcard .times { font-variant-numeric:tabular-nums; }
+  /* preview bar */
+  #pvbar { position:fixed; left:8px; right:8px; bottom:var(--pvb, calc(var(--nav-h) + var(--safe-b) + 6px)); z-index:32; height:60px; border-radius:14px; background:#3b2a6b; display:none; align-items:center; gap:10px; padding:0 8px; box-shadow:0 8px 28px rgba(0,0,0,.45); max-width:704px; margin:0 auto; }
+  #pvbar.on { display:flex; }
+  #pvbar .k { color:var(--acc); font-size:11px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; }
+  #pvbar .s { font-variant-numeric:tabular-nums; }
+  .pvprog { height:3px; background:rgba(255,255,255,.2); border-radius:2px; margin-top:5px; overflow:hidden; } .pvprog i { display:block; height:100%; width:0; background:var(--acc); }
+  @media (min-width:700px) { #mini, #pvbar { left:calc(50% - 352px); right:auto; width:704px; } }
 </style>
 </head>
 <body>
 <header class="appbar">
-  <div class="logo"><span class="mark" id="logoMark"></span><span>Spoti<b>Txell</b></span></div>
+  <div class="logo"><img class="mark" src="/static/avatar.jpg" alt=""><span>coni<b>MIX</b></span></div>
   <div class="actions"><button class="ib" id="qrBtn" aria-label="Jam session"></button><button class="ib" id="outBtn" aria-label="Tanca la sessió"></button></div>
 </header>
+<div class="jambar" id="jamBar" hidden><span>Ets a la jam com a convidat</span><a class="jbtn" href="/">Accedeix com a amfitrió</a></div>
 <main id="main"></main>
 
 <div id="mini"><div class="prog" id="mProg"></div>
   <img class="th" id="mArt" alt=""><div class="mt" id="mInfo"><div class="t" id="mTitle"></div><div class="s" id="mSub"></div></div>
   <button class="rb" id="mPlay" aria-label="Reprodueix / pausa"></button><button class="rb" id="mNext" aria-label="Següent"></button>
 </div>
+<div id="pvbar"><button class="rb play" id="pvPlay" aria-label="Reprodueix / pausa la prèvia"></button>
+  <div class="mt"><div class="k">Prèvia</div><div class="t" id="pvTitle"></div><div class="pvprog"><i id="pvProg"></i></div></div>
+  <span class="s" id="pvTime"></span><button class="rb" id="pvClose" aria-label="Tanca la prèvia"></button></div>
 <nav id="nav"></nav>
 
 <section id="np" aria-hidden="true">
@@ -200,7 +237,7 @@
 <div id="backdrop"></div><div id="sheet" role="dialog"></div>
 <div id="toast"></div>
 <video id="ns" muted loop playsinline src="/static/nosleep.mp4" style="position:fixed;width:1px;height:1px;opacity:.01;pointer-events:none;left:0;top:0"></video>
-<audio id="audio" preload="auto"></audio><audio id="audio2" preload="auto"></audio>
+<audio id="audio" preload="auto"></audio><audio id="audio2" preload="auto"></audio><audio id="pv" preload="auto"></audio>
 
 <script>
 const GUEST = location.pathname.startsWith('/jam');
@@ -220,6 +257,8 @@ const P = {
   grip:'<circle cx="9" cy="6" r="1.5"/><circle cx="15" cy="6" r="1.5"/><circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/><circle cx="9" cy="18" r="1.5"/><circle cx="15" cy="18" r="1.5"/>',
   x:'<path d="M18 6L6 18M6 6l12 12"/>', check:'<path d="M20 6L9 17l-5-5"/>', qr:'<path d="M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h3v3h-3zM20 14v.01M14 20h.01M20 20h.01M17 17h3v3"/>',
   out:'<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>', edit:'<path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>',
+  head:'<path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/>',
+  eye:'<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>',
   music:'<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>', folder:'<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
 };
 const FILLED = new Set(['play','pause','next','grip','more']);
@@ -227,7 +266,8 @@ const I = (n, cls='') => `<svg class="ic ${FILLED.has(n)?'f ':''}${cls}" viewBox
 
 // ---------- state ----------
 let S = {songs:{}, playlists:[], queue:[], current:null, jam_url:''}, lastSig = '', dragging = false;
-let tab = GUEST ? 'search' : 'queue', openPl = null;
+let RS = {}, LQ = '', viewKey = '', swipeOpen = null, pvWait = null;   // RS: download status of search results
+let tab = 'queue', openPl = null;   // guests also land on the queue
 const SQ = {q:'', res:[], loading:false, err:''};   // search tab
 const PQ = {q:'', res:[], loading:false, err:''};   // search inside a playlist
 const TABS = GUEST ? [['search','Cerca','search'],['queue','Cua','queue']] : [['search','Cerca','search'],['queue','Cua','queue'],['lists','Llistes','lists']];
@@ -238,18 +278,24 @@ async function api(path, method = 'GET', body) {
   const r = await fetch(path, {method, headers:{'Content-Type':'application/json'}, body: body ? JSON.stringify(body) : undefined});
   const j = await r.json().catch(() => ({}));
   if (r.status === 401 && !GUEST && path !== '/api/login') { showLogin(); throw new Error('login'); }
+  if (r.status === 401 && GUEST) { showJamLocked(j.error); throw new Error('jam'); }
   if (!r.ok) { toast(j.error || 'Error'); throw new Error(j.error); }
   return j;
 }
 async function act(path, method, body) { try { const r = await api(path, method, body); lastSig = ''; await poll(); return r; } catch { lastSig = ''; await poll(); return null; } }
 let pollSeq = 0;
 async function poll() {
-  const my = ++pollSeq; let st; try { st = await (await fetch('/api/state', {cache:'no-store'})).json(); } catch { return; }
+  const my = ++pollSeq; let st, rs = RS;
+  try { const r = await fetch('/api/state', {cache:'no-store'}); if (r.status === 401) { if (GUEST) showJamLocked("La jam s'ha tancat o el codi ha canviat. Torna a escanejar el QR."); else showLogin(); return; } st = await r.json(); } catch { return; }
+  const ids = [...new Set([...SQ.res, ...PQ.res].map(r => r.id))];
+  if (ids.length) { try { rs = await (await fetch('/api/songs?ids=' + ids.join(','), {cache:'no-store'})).json(); } catch {} }
   if (my !== pollSeq) return;
-  const sig = JSON.stringify(st);
-  if (sig === lastSig) return; lastSig = sig; S = st;
-  syncPlayer(); if (!dragging) render();
+  const sig = JSON.stringify([st, rs]);
+  if (sig === lastSig) return; lastSig = sig; S = st; RS = rs;
+  if (pvWait && statusOf(pvWait.id)?.status === 'ready') { toast(`«${pvWait.title.slice(0, 40)}» ja es pot escoltar`); pvWait = null; }
+  syncPlayer(); if (!dragging && !seeking && !swipeOpen) render();
 }
+const statusOf = id => S.songs[id] || RS[id];
 
 // ---------- sheets ----------
 let sheetDone = null;
@@ -297,44 +343,60 @@ function statusBits(s) {
   return {sub:`<span class="ok">${I('check')}Descarregada</span>`, bar:''};
 }
 function empty(icon, title, text) { return `<div class="empty">${I(icon)}<b>${title}</b>${text}</div>`; }
-function searchBox(ctx, st, ph) {
-  return `<form class="searchbar" data-ctx="${ctx}">${I('search')}<input type="search" data-keep="q-${ctx}" placeholder="${ph}" value="${esc(st.q)}" enterkeyhint="search" autocomplete="off" autocapitalize="off" spellcheck="false">${st.q ? `<button type="button" class="x" data-act="sclear" data-ctx="${ctx}" aria-label="Esborra">${I('x')}</button>` : ''}</form>`;
+function searchBox(ctx, q, ph, go = true) {
+  return `<form class="searchbar" data-ctx="${ctx}">${go ? '' : I('search')}<input type="search" data-keep="q-${ctx}" placeholder="${ph}" value="${esc(q)}" enterkeyhint="search" autocomplete="off" autocapitalize="off" spellcheck="false">
+    <button type="button" class="x" data-act="sclear" data-ctx="${ctx}" aria-label="Esborra" ${q ? '' : 'hidden'}>${I('x')}</button>${go ? `<button type="submit" class="go" aria-label="Cerca">${I('search')}</button>` : ''}</form>`;
 }
 function resultRows(st, ctx, pl) {
-  if (st.loading) return '<div class="skel"></div><div class="skel"></div><div class="skel"></div><div class="skel"></div>';
-  if (st.err) return `<div class="note" style="color:var(--danger)">${esc(st.err)}</div>`;
-  return `<div class="list">${st.res.map((r, i) => {
-    const s = S.songs[r.id]; const sb = s ? statusBits(s) : null;
+  if (st.loading && !st.res.length) return '<div class="skel"></div><div class="skel"></div><div class="skel"></div><div class="skel"></div>';
+  if (st.err && !st.res.length) return `<div class="note" style="color:var(--danger)">${esc(st.err)}</div>`;
+  return `${st.loading ? `<div class="hint">Cercant «${esc(st.q.trim())}»…</div>` : ''}<div class="list">${st.res.map((r, i) => {
+    const s = statusOf(r.id); const sb = s ? statusBits(s) : null;
     const inList = ctx === 'pl' && pl && pl.songs.includes(r.id);
+    const playingPv = pvR && pvR.id === r.id && !pv.paused;
+    const pvBtn = `<button class="rb ${playingPv ? 'play' : ''}" data-act="rprev" data-ctx="${ctx}" data-i="${i}" aria-label="Escolta una prèvia">${I(playingPv ? 'pause' : 'head')}</button>`;
     let right;
-    if (ctx === 'pl') right = inList ? `<span class="rb done">${I('check')}</span>` : `<button class="rb add" data-act="pladdres" data-i="${i}" aria-label="Afegeix a la llista">${I('plus')}</button>`;
-    else right = GUEST ? `<button class="rb add" data-act="rmore" data-i="${i}" aria-label="Afegeix">${I('plus')}</button>`
-      : `<button class="rb play" data-act="rplay" data-i="${i}" aria-label="Reprodueix ara">${I('play')}</button><button class="rb" data-act="rmore" data-i="${i}" aria-label="Més opcions">${I('more')}</button>`;
+    if (ctx === 'pl') right = pvBtn + (inList ? `<span class="rb done">${I('check')}</span>` : `<button class="rb add" data-act="pladdres" data-i="${i}" aria-label="Afegeix a la llista">${I('plus')}</button>`);
+    else right = pvBtn + (GUEST ? `<button class="rb add" data-act="rmore" data-i="${i}" aria-label="Afegeix a la cua">${I('plus')}</button>`
+      : `<button class="rb" data-act="rmore" data-i="${i}" aria-label="Opcions: reprodueix, cua, llista">${I('more')}</button>`);
     const act = ctx === 'pl' ? (inList ? '' : 'pladdres') : 'rmore';
     return `<div class="row" ${act ? `data-act="${act}" data-i="${i}"` : ''}>
-      <img class="th" src="${esc(r.thumbnail)}" alt="" loading="lazy"><div class="mt"><div class="t">${esc(r.title)}</div><div class="s"><span>${esc(r.channel)} · ${fmt(r.duration)}</span></div>${sb ? `<div class="s">${sb.sub}</div>` : ''}</div>${right}${sb ? sb.bar : ''}</div>`;
+      <img class="th" src="${esc(r.thumbnail)}" alt="" loading="lazy"><div class="mt"><div class="t">${esc(r.title)}</div><div class="s"><span>${esc(r.channel)}${r.duration ? ' · ' + fmt(r.duration) : ''}</span></div>${sb ? `<div class="s">${sb.sub}</div>` : ''}</div>${right}${sb ? sb.bar : ''}</div>`;
   }).join('')}</div>`;
 }
 
+const SEARCH_HINT = '<div class="hint">Cerca a YouTube i YouTube Music. Comença sola a partir de 5 lletres. Toca <b>🎧</b> per escoltar-ne una prèvia.</div>';
 function viewSearch() {
-  const body = SQ.loading || SQ.err || SQ.res.length ? resultRows(SQ, 'main') : empty('search', 'Cerca música', GUEST ? 'Troba una cançó i afegeix-la a la cua.' : "Escriu el nom d'una cançó o d'un artista.<br>Només sona quan la descàrrega és al 100%.");
-  return `<h1 class="title">${GUEST ? 'Jam session' : 'Cerca'}</h1>${searchBox('main', SQ, 'Cançons, artistes o vídeos')}${body}`;
+  const body = SQ.loading || SQ.err || SQ.res.length ? resultRows(SQ, 'main') : empty('search', 'Cerca música', GUEST ? 'Troba una cançó, escolta-la i afegeix-la a la cua.' : "Escriu el nom d'una cançó o d'un artista.<br>Només sona quan la descàrrega és al 100%.");
+  return {key:'search', pre:`<h1 class="title">${GUEST ? 'Jam session' : 'Cerca'}</h1>`, box: searchBox('main', SQ.q, 'Cançons, artistes o vídeos') + SEARCH_HINT, post: body};
 }
 
 function qRow(q, idx) {
   const s = S.songs[q.song_id] || {}; const ready = s.status === 'ready'; const cur = q.qid === S.current; const sb = statusBits(s);
-  return `<div class="row ${cur ? 'cur' : ''} ${ready ? '' : 'dim'}" data-sid="${q.qid}" ${!GUEST && ready ? `data-act="qplay" data-qid="${q.qid}"` : ''}>
-    ${thumbImg(q.song_id)}<div class="mt"><div class="t">${esc(s.title)}</div>
+  const inner = `${thumbImg(q.song_id)}<div class="mt"><div class="t">${esc(s.title)}</div>
     <div class="s">${cur ? `<span class="eq ${audio.paused ? 'paused' : ''}"><i></i><i></i><i></i></span>` : ''}<span>${esc(s.channel)}</span>${ready ? '' : sb.sub}</div></div>
     ${GUEST ? '' : `<button class="rb" data-act="qmore" data-qid="${q.qid}" aria-label="Més opcions">${I('more')}</button>`}
-    ${idx <= curIdx() ? `<span class="rb" style="opacity:.18" title="Està sonant: no es pot moure">${I('grip')}</span>` : `<button class="rb grip" aria-label="Arrossega per canviar l'ordre">${I('grip')}</button>`}${ready ? '' : sb.bar}</div>`;
+    ${idx <= curIdx() ? `<span class="rb" style="opacity:.18" title="Està sonant: no es pot moure">${I('grip')}</span>` : `<button class="rb grip" aria-label="Arrossega per canviar l'ordre">${I('grip')}</button>`}${ready ? '' : sb.bar}`;
+  const cls = `${cur ? 'cur' : ''} ${ready ? '' : 'dim'}`;
+  if (GUEST) return `<div class="row ${cls}" data-sid="${q.qid}">${inner}</div>`;
+  const acts = `${ready && !cur ? `<button class="sp" data-act="swplay" data-qid="${q.qid}">${I('play')}Reprodueix</button>` : ''}<button class="sr" data-act="swrm" data-qid="${q.qid}">${I('trash')}Treu</button>`;
+  return `<div class="row swipe ${cls}" data-sid="${q.qid}"><div class="sacts">${acts}</div><div class="rin" ${ready ? `data-act="qplay" data-qid="${q.qid}"` : ''}>${inner}</div></div>`;
+}
+function npCard() {   // what is playing, with remaining time and a seek bar, right in the queue
+  const s = songOfQ(S.current); if (!s || GUEST) return '';
+  const d = audio.duration || s.duration || 0, c = audio.currentTime || 0, p = d ? c / d * 100 : 0;
+  return `<div class="npcard"><div class="top">${thumbImg(s.id)}<div class="mt"><div class="t">${esc(s.title)}</div><div class="s">${esc(s.channel)}</div></div>
+    <button class="rb play" data-act="nptoggle" aria-label="Reprodueix / pausa">${I(audio.paused ? 'play' : 'pause')}</button><button class="rb" data-act="npnext" aria-label="Següent">${I('next')}</button></div>
+    <input type="range" id="qSeek" min="0" max="1000" value="${Math.round(p * 10)}" style="--p:${p}%" aria-label="Posició de la cançó">
+    <div class="times"><span id="qCur">${fmt(c)}</span><span id="qRem">-${fmt(Math.max(0, d - c))}</span></div></div>`;
 }
 const curIdx = () => S.queue.findIndex(q => q.qid === S.current);
 function viewQueue() {
   const n = S.queue.length;
-  return `<h1 class="title">Cua</h1>
+  return {key:'queue', pre:`<h1 class="title">Cua</h1>${npCard()}
     <div class="sec"><span>${n} ${n === 1 ? 'cançó' : 'cançons'}</span>${GUEST || !n ? '' : '<button class="link dng" data-act="qclear">Buida la cua</button>'}</div>
-    ${n ? `<div class="list sortlist" data-kind="queue">${S.queue.map((q, i) => qRow(q, i)).join('')}</div>` : empty('queue', 'La cua és buida', 'Cerca una cançó o carrega una llista.')}`;
+    ${GUEST || !n ? '' : '<div class="hint">Llisca una cançó cap a l\'esquerra per reproduir-la o treure-la</div>'}
+    ${n ? `<div class="list sortlist" data-kind="queue">${S.queue.map((q, i) => qRow(q, i)).join('')}</div>` : empty('queue', 'La cua és buida', 'Cerca una cançó o carrega una llista.')}`};
 }
 
 const orphans = () => Object.values(S.songs).filter(s => s.status !== 'error' && !S.playlists.some(p => p.songs.includes(s.id)));
@@ -344,69 +406,87 @@ function viewLists() {
   const pl = S.playlists.find(p => p.id === openPl);
   if (pl) return viewPlaylist(pl);
   openPl = null;
-  const orph = orphans();
-  return `<h1 class="title">Llistes</h1>
-    <button class="btn pri block" data-act="plnew">${I('plus')}Nova llista</button>
-    <div class="list" style="margin-top:10px">${S.playlists.map(p => { const c = firstReady(p); return `<button class="pcard" data-act="plopen" data-id="${p.id}"><div class="cover">${c ? thumbImg(c, '') : I('music')}</div><div class="mt"><div class="t">${esc(p.name)}</div><div class="s">${p.songs.length} ${p.songs.length === 1 ? 'cançó' : 'cançons'}</div></div>${I('right')}</button>`; }).join('')}
-    ${orph.length ? `<button class="pcard" data-act="plorph"><div class="cover">${I('folder')}</div><div class="mt"><div class="t">Sense llista</div><div class="s">${orph.length} ${orph.length === 1 ? 'cançó descarregada' : 'cançons descarregades'}</div></div>${I('right')}</button>` : ''}</div>
-    ${S.playlists.length || orph.length ? '' : empty('lists', 'Cap llista encara', 'Crea la primera i afegeix-hi cançons cercant-les.')}`;
+  const orph = orphans(), many = S.playlists.length >= 2;
+  const norm = x => x.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  const shown = S.playlists.filter(p => !LQ.trim() || norm(p.name).includes(norm(LQ.trim())));
+  return {key:'lists' + (many ? '+f' : ''), pre:`<h1 class="title">Llistes</h1>
+    <button class="btn pri block" data-act="plnew" style="margin-bottom:12px">${I('plus')}Nova llista</button>`,
+    box: many ? searchBox('lf', LQ, 'Cerca una llista', false) : '',
+    post:`<div class="list">${shown.map(p => { const c = firstReady(p); return `<button class="pcard" data-act="plopen" data-id="${p.id}"><div class="cover">${c ? thumbImg(c, '') : I('music')}</div><div class="mt"><div class="t">${esc(p.name)}</div><div class="s">${p.songs.length} ${p.songs.length === 1 ? 'cançó' : 'cançons'}</div></div>${I('right')}</button>`; }).join('')}
+    ${LQ.trim() && !shown.length ? '<div class="empty" style="padding:20px">Cap llista coincideix</div>' : ''}
+    ${orph.length && !LQ.trim() ? `<button class="pcard" data-act="plorph"><div class="cover">${I('folder')}</div><div class="mt"><div class="t">Sense llista</div><div class="s">${orph.length} ${orph.length === 1 ? 'cançó descarregada' : 'cançons descarregades'}</div></div>${I('right')}</button>` : ''}</div>
+    ${S.playlists.length || orph.length ? '' : empty('lists', 'Cap llista encara', 'Crea la primera i afegeix-hi cançons cercant-les.')}`};
 }
 function viewPlaylist(pl) {
   const total = pl.songs.reduce((a, id) => a + (S.songs[id]?.duration || 0), 0);
   const ready = pl.songs.filter(id => S.songs[id]?.status === 'ready').length;
   const rows = pl.songs.map(id => {
     const s = S.songs[id] || {}; const sb = statusBits(s); const isReady = s.status === 'ready';
-    return `<div class="row ${isReady ? '' : 'dim'}" data-sid="${id}">${thumbImg(id)}<div class="mt"><div class="t">${esc(s.title)}</div>
+    const acts = `${isReady ? `<button class="sp" data-act="pswplay" data-id="${id}">${I('play')}Reprodueix</button>` : ''}<button class="sr" data-act="pswrm" data-id="${id}">${I('trash')}Treu</button>`;
+    return `<div class="row swipe ${isReady ? '' : 'dim'}" data-sid="${id}"><div class="sacts">${acts}</div><div class="rin">${thumbImg(id)}<div class="mt"><div class="t">${esc(s.title)}</div>
       <div class="s"><span>${esc(s.channel)} · ${fmt(s.duration)}</span>${isReady ? '' : sb.sub}</div></div>
       <button class="rb" data-act="pmore" data-id="${id}" aria-label="Més opcions">${I('more')}</button>
-      <button class="rb grip" aria-label="Arrossega per canviar l'ordre">${I('grip')}</button>${isReady ? '' : sb.bar}</div>`;
+      <button class="rb grip" aria-label="Arrossega per canviar l'ordre">${I('grip')}</button>${isReady ? '' : sb.bar}</div></div>`;
   }).join('');
   const searching = PQ.loading || PQ.err || PQ.res.length; const c = firstReady(pl);
-  return `<button class="back" data-act="plback">${I('left')}Llistes</button>
+  return {key:'pl' + pl.id, pre:`<button class="back" data-act="plback">${I('left')}Llistes</button>
     <div class="phead"><div class="cover big">${c ? thumbImg(c, '') : I('music')}</div>
       <div class="mt"><h1>${esc(pl.name)}</h1><div class="s">${pl.songs.length} ${pl.songs.length === 1 ? 'cançó' : 'cançons'}${total ? ' · ' + fmtLong(total) : ''}</div></div>
       <button class="rb" data-act="plmenu" aria-label="Opcions de la llista">${I('more')}</button></div>
     <div class="btnrow"><button class="btn pri" data-act="plplay" ${ready ? '' : 'disabled'}>${I('play')}Reprodueix</button><button class="btn" data-act="pladdq" ${pl.songs.length ? '' : 'disabled'}>${I('queue')}A la cua</button></div>
-    <div class="sec"><span>Afegeix cançons</span></div>
-    ${searchBox('pl', PQ, 'Cerca una cançó per afegir-la a la llista')}
-    ${searching ? `<div class="sec"><span>Resultats</span><button class="link" data-act="sclear" data-ctx="pl">Tanca</button></div>${resultRows(PQ, 'pl', pl)}` : ''}
+    <div class="sec"><span>Afegeix cançons</span></div>`,
+    box: searchBox('pl', PQ.q, 'Cerca una cançó per afegir-la a la llista'),
+    post:`${searching ? `<div class="sec"><span>Resultats</span><button class="link" data-act="sclear" data-ctx="pl">Tanca</button></div>${resultRows(PQ, 'pl', pl)}` : ''}
     <div class="sec"><span>Cançons de la llista</span></div>
-    ${pl.songs.length ? `<div class="list sortlist" data-kind="pl" data-pid="${pl.id}">${rows}</div>` : empty('music', 'Llista buida', 'Cerca una cançó a dalt i quedarà al final de la llista.')}`;
+    ${pl.songs.length ? `<div class="list sortlist" data-kind="pl" data-pid="${pl.id}">${rows}</div>` : empty('music', 'Llista buida', 'Cerca una cançó a dalt i quedarà al final de la llista.')}`};
 }
 function viewOrphans() {
   const orph = orphans();
-  return `<button class="back" data-act="plback">${I('left')}Llistes</button><h1 class="title">Sense llista</h1>
+  return {key:'orph', pre:`<button class="back" data-act="plback">${I('left')}Llistes</button><h1 class="title">Sense llista</h1>
     <div class="note">Cançons descarregades que no són a cap llista. Afegeix-les a una llista o esborra-les per alliberar espai.</div>
     ${orph.length ? `<div class="list">${orph.map(s => { const sb = statusBits(s); return `<div class="row">${thumbImg(s.id)}<div class="mt"><div class="t">${esc(s.title)}</div><div class="s"><span>${esc(s.channel)} · ${fmt(s.duration)}</span>${s.status === 'ready' ? '' : sb.sub}</div></div>
-      <button class="rb" data-act="omore" data-id="${s.id}" aria-label="Més opcions">${I('more')}</button>${s.status === 'ready' ? '' : sb.bar}</div>`; }).join('')}</div>` : empty('check', 'Tot en ordre', 'Totes les cançons són a alguna llista.')}`;
+      <button class="rb" data-act="omore" data-id="${s.id}" aria-label="Més opcions">${I('more')}</button>${s.status === 'ready' ? '' : sb.bar}</div>`; }).join('')}</div>` : empty('check', 'Tot en ordre', 'Totes les cançons són a alguna llista.')}`};
 }
 
 function renderNav() {
   const qn = S.queue.length;
   $('#nav').innerHTML = TABS.map(([k, label, icon]) => `<button data-tab="${k}" class="${tab === k ? 'on' : ''}" aria-label="${label}">${I(icon)}${k === 'queue' && qn ? `<span class="badge">${qn}</span>` : ''}<span>${label}</span></button>`).join('');
 }
+// The search box is only rebuilt when the view changes, so typing (and the phone keyboard) is never interrupted.
 function render() {
   if (document.body.dataset.login) return;
-  const main = $('#main');
-  const ae = document.activeElement; const keep = ae?.dataset?.keep; const sel = keep ? [ae.selectionStart, ae.selectionEnd] : null;
-  main.innerHTML = tab === 'search' ? viewSearch() : tab === 'queue' ? viewQueue() : viewLists();
-  if (keep) { const el = main.querySelector(`[data-keep="${keep}"]`); if (el) { el.focus(); try { el.setSelectionRange(...sel); } catch {} } }
+  const v = tab === 'search' ? viewSearch() : tab === 'queue' ? viewQueue() : viewLists();
+  if (v.key !== viewKey) { viewKey = v.key; $('#main').innerHTML = `<div id="vpre"></div><div id="vbox">${v.box || ''}</div><div id="vpost"></div>`; }
+  $('#vpre').innerHTML = v.pre || ''; $('#vpost').innerHTML = v.post || '';
   renderNav(); renderPlayer();
 }
 
 // ---------- search ----------
 async function runSearch(ctx, q) {
-  const st = ctx === 'pl' ? PQ : SQ; st.q = q;
-  if (!q) { st.res = []; st.err = ''; return render(); }
-  st.loading = true; st.err = ''; st.res = []; render();
-  try { st.res = await api('/api/search?q=' + encodeURIComponent(q)); if (!st.res.length) st.err = 'Cap resultat'; } catch (e) { st.err = e.message; }
-  st.loading = false; render();
+  const st = ctx === 'pl' ? PQ : SQ;
+  if (!q) { st.res = []; st.err = ''; st.last = ''; return render(); }
+  if (q === st.last && st.res.length && !st.err) return;
+  const my = st.seq = (st.seq || 0) + 1; st.loading = true; st.err = ''; render();
+  let res = st.res, err = '';
+  try { res = await api('/api/search?q=' + encodeURIComponent(q)); if (!res.length) err = 'Cap resultat'; } catch (e) { err = e.message || 'Error de cerca'; }
+  if (my !== st.seq) return;   // a newer search already started
+  st.loading = false; st.res = err ? [] : res; st.err = err; st.last = q; lastSig = ''; render(); poll();
 }
+const searchTimers = {};
 document.addEventListener('submit', e => {
   const f = e.target.closest('.searchbar'); if (!f) return; e.preventDefault();
-  const inp = f.querySelector('input'); inp.blur(); runSearch(f.dataset.ctx, inp.value.trim());
+  const inp = f.querySelector('input'); inp.blur(); if (f.dataset.ctx === 'lf') return;
+  clearTimeout(searchTimers[f.dataset.ctx]); runSearch(f.dataset.ctx, inp.value.trim());
 });
-document.addEventListener('input', e => { const k = e.target.dataset?.keep; if (k === 'q-main') SQ.q = e.target.value; if (k === 'q-pl') PQ.q = e.target.value; });
+document.addEventListener('input', e => {
+  const k = e.target.dataset?.keep; if (!k) return;
+  const ctx = k.slice(2), v = e.target.value;
+  const x = e.target.closest('.searchbar')?.querySelector('.x'); if (x) x.hidden = !v;
+  if (ctx === 'lf') { LQ = v; return render(); }
+  const st = ctx === 'pl' ? PQ : SQ; st.q = v;
+  clearTimeout(searchTimers[ctx]);
+  if (v.trim().length >= 5) searchTimers[ctx] = setTimeout(() => runSearch(ctx, v.trim()), 650);   // automatic from the 5th character
+});
 
 // ---------- actions ----------
 const metaOf = r => ({video_id:r.id, title:r.title, channel:r.channel, duration:r.duration});
@@ -422,14 +502,32 @@ async function requestResult(r, mode) {
   toast(mode === 'now' ? 'Reproduint…' : mode === 'next' ? "Sonarà després de l'actual" : 'Afegida al final de la cua');
 }
 function listAddToast(x) { toast(x.already ? 'Ja era a la llista' : x.had_download ? 'Afegida a la llista (ja la tenies descarregada)' : 'Afegida al final de la llista'); }
+async function removeFromList(pl, s) {
+  const other = S.playlists.some(p => p.id !== pl.id && p.songs.includes(s.id));
+  if (!other && !await ask({title:'Treure la cançó?', text:"No és a cap altra llista: també s'esborrarà la descàrrega.", ok:'Treu i esborra', danger:true})) return;
+  await act(`/api/playlists/${pl.id}/songs/${s.id}`, 'DELETE');
+}
 $('#main').addEventListener('click', async e => {
+  if (performance.now() < swallowUntil) { e.preventDefault(); return; }   // the click that ends a swipe
+  if (swipeOpen && !e.target.closest('.sacts')) { closeSwipe(); return; }
   const el = e.target.closest('[data-act]'); if (!el) return;
   const d = el.dataset, pl = S.playlists.find(p => p.id === openPl);
+  if (swipeOpen) closeSwipe();
   switch (d.act) {
-    case 'sclear': { const st = d.ctx === 'pl' ? PQ : SQ; st.q = ''; st.res = []; st.err = ''; render(); break; }
+    case 'sclear': {
+      const f = el.closest('.searchbar'), inp = f?.querySelector('input'); if (inp) { inp.value = ''; inp.focus(); } el.hidden = true;
+      if (d.ctx === 'lf') { LQ = ''; render(); break; }
+      const st = d.ctx === 'pl' ? PQ : SQ; clearTimeout(searchTimers[d.ctx]); st.seq = (st.seq || 0) + 1; st.q = ''; st.res = []; st.err = ''; st.last = ''; st.loading = false; render(); break; }
+    case 'rprev': previewResult((d.ctx === 'pl' ? PQ : SQ).res[+d.i]); break;
+    case 'nptoggle': togglePlay(); break;
+    case 'npnext': skip(); break;
+    case 'swplay': await act('/api/queue/play', 'POST', {qid:+d.qid}); break;
+    case 'swrm': await act('/api/queue/remove', 'POST', {qid:+d.qid}); break;
+    case 'pswplay': await act('/api/queue/add', 'POST', {song_id:d.id, mode:'now'}); toast('Reproduint…'); break;
+    case 'pswrm': await removeFromList(pl, S.songs[d.id]); break;
     case 'rplay': await requestResult(SQ.res[+d.i], 'now'); break;
     case 'rmore': {
-      const r = SQ.res[+d.i]; const have = S.songs[r.id]?.status === 'ready';
+      const r = SQ.res[+d.i]; const have = statusOf(r.id)?.status === 'ready';
       const extra = GUEST ? [] : [{v:'list', icon:'lists', label:'Afegeix a una llista…', sub: have ? 'Ja la tens descarregada' : ''}];
       const v = await songMenu({title:r.title, sub:r.channel, thumb:r.thumbnail, ready:true, extra});
       if (v === 'list') { const pid = await pickPlaylist(); if (pid) { const x = await act(`/api/playlists/${pid}/request`, 'POST', metaOf(r)); if (x) listAddToast(x); } }
@@ -448,15 +546,12 @@ $('#main').addEventListener('click', async e => {
     case 'plmenu': { const v = await menu({title:pl.name, items:[{v:'ren', icon:'edit', label:'Canvia el nom'}, {v:'del', icon:'trash', label:'Esborra la llista', sub:'Les cançons descarregades es mantenen', danger:true}]});
       if (v === 'ren') { const name = await input({title:'Canvia el nom', value:pl.name}); if (name) await act('/api/playlists/' + pl.id, 'PATCH', {name}); }
       else if (v === 'del' && await ask({title:`Esborrar «${pl.name}»?`, text:'Les cançons descarregades es mantenen a «Sense llista».', ok:'Esborra', danger:true})) { await act('/api/playlists/' + pl.id, 'DELETE'); openPl = null; render(); } break; }
-    case 'plplay': await act('/api/queue/load', 'POST', {playlist_id:pl.id, mode:'replace'}); toast(`Reproduint «${pl.name}»`); break;
-    case 'pladdq': await act('/api/queue/load', 'POST', {playlist_id:pl.id, mode:'append'}); toast('Llista afegida a la cua'); break;
+    case 'plplay': await act('/api/queue/load', 'POST', {playlist_id:pl.id, mode:'replace'}); toast(`Reproduint «${pl.name}»`); tab = 'queue'; render(); scrollTo(0, 0); break;
+    case 'pladdq': await act('/api/queue/load', 'POST', {playlist_id:pl.id, mode:'append'}); toast('Llista afegida a la cua'); tab = 'queue'; render(); scrollTo(0, 0); break;
     case 'pmore': { const s = S.songs[d.id];
       const v = await songMenu({title:s.title, sub:s.channel, thumb:thumbOf(s.id), ready:s.status === 'ready', extra:[{v:'rm', icon:'trash', label:'Treu de la llista', danger:true}]});
-      if (v === 'rm') {
-        const other = S.playlists.some(p => p.id !== pl.id && p.songs.includes(s.id));
-        if (!other && !await ask({title:'Treure la cançó?', text:"No és a cap altra llista: també s'esborrarà la descàrrega.", ok:'Treu i esborra', danger:true})) break;
-        await act(`/api/playlists/${pl.id}/songs/${s.id}`, 'DELETE');
-      } else if (v) { await act('/api/queue/add', 'POST', {song_id:s.id, mode:v}); toast('Afegida a la cua'); } break; }
+      if (v === 'rm') await removeFromList(pl, s);
+      else if (v) { await act('/api/queue/add', 'POST', {song_id:s.id, mode:v}); toast('Afegida a la cua'); } break; }
     case 'omore': { const s = S.songs[d.id];
       const v = await songMenu({title:s.title, sub:s.channel, thumb:thumbOf(s.id), ready:s.status === 'ready', extra:[{v:'list', icon:'lists', label:'Afegeix a una llista…'}, {v:'del', icon:'trash', label:'Esborra la descàrrega', danger:true}]});
       if (v === 'list') { const pid = await pickPlaylist(); if (pid) { await act(`/api/playlists/${pid}/songs`, 'POST', {song_ids:[s.id]}); toast('Afegida a la llista'); } }
@@ -464,7 +559,40 @@ $('#main').addEventListener('click', async e => {
       else if (v) { await act('/api/queue/add', 'POST', {song_id:s.id, mode:v}); toast('Afegida a la cua'); } break; }
   }
 });
-$('#nav').onclick = e => { const b = e.target.closest('[data-tab]'); if (!b) return; if (b.dataset.tab === tab && tab === 'lists') openPl = null; tab = b.dataset.tab; render(); scrollTo(0, 0); };
+$('#nav').onclick = e => {
+  const b = e.target.closest('[data-tab]'); if (!b) return; closeSwipe();
+  tab = b.dataset.tab; if (tab === 'lists') openPl = null;   // "Llistes" always opens the list index
+  render(); scrollTo(0, 0);
+};
+
+// ---------- swipe a song to the left to reveal its actions ----------
+let sw = null, swallowUntil = 0;
+const actsW = rin => rin.parentElement.querySelector('.sacts').offsetWidth;
+function closeSwipe() { if (!swipeOpen) return; swipeOpen.style.transform = ''; swipeOpen = null; lastSig = ''; setTimeout(poll, 250); }
+document.addEventListener('pointerdown', e => { if (swipeOpen && !e.target.closest('.row.swipe')) closeSwipe(); });
+$('#main').addEventListener('pointerdown', e => {
+  const rin = e.target.closest('.row.swipe > .rin'); if (!rin || e.target.closest('.grip, button, input')) return;
+  if (swipeOpen && swipeOpen !== rin) closeSwipe();
+  sw = {rin, id:e.pointerId, x0:e.clientX, y0:e.clientY, x:0, base: swipeOpen === rin ? -actsW(rin) : 0, active:false};
+});
+$('#main').addEventListener('pointermove', e => {
+  if (!sw || e.pointerId !== sw.id) return;
+  const dx = e.clientX - sw.x0, dy = e.clientY - sw.y0;
+  if (!sw.active) {
+    if (Math.abs(dy) > 12 && Math.abs(dy) > Math.abs(dx)) { sw = null; return; }   // vertical scroll
+    if (Math.abs(dx) < 10) return;
+    sw.active = true; sw.rin.style.transition = 'none'; try { sw.rin.setPointerCapture(e.pointerId); } catch {}
+  }
+  sw.x = Math.max(-actsW(sw.rin), Math.min(0, sw.base + dx)); sw.rin.style.transform = `translateX(${sw.x}px)`;
+});
+function endSwipe(e) {
+  if (!sw || (e && e.pointerId !== sw.id)) return; const s = sw; sw = null; if (!s.active) return;
+  swallowUntil = performance.now() + 400; s.rin.style.transition = '';
+  const W = actsW(s.rin);
+  if (s.x < -W / 2) { s.rin.style.transform = `translateX(${-W}px)`; swipeOpen = s.rin; }
+  else { s.rin.style.transform = ''; if (swipeOpen === s.rin) closeSwipe(); }
+}
+$('#main').addEventListener('pointerup', endSwipe); $('#main').addEventListener('pointercancel', endSwipe);
 
 // ---------- drag to reorder (queue and playlists) ----------
 $('#main').addEventListener('pointerdown', e => {
@@ -493,14 +621,29 @@ $('#main').addEventListener('pointerdown', e => {
 });
 
 // ---------- header ----------
-$('#logoMark').innerHTML = I('music'); $('#qrBtn').innerHTML = I('qr'); $('#outBtn').innerHTML = I('out');
-$('#qrBtn').onclick = () => {
+$('#qrBtn').innerHTML = I('qr'); $('#outBtn').innerHTML = I('out');
+function showQR() {
   sheetDone = () => {};
-  openSheet(`<h3 style="text-align:center">Jam session</h3><div class="qr"><img src="/api/qr.svg?u=${encodeURIComponent(S.jam_url)}" alt="Codi QR"><code>${esc(S.jam_url)}</code>
-    <p style="margin:6px 0 0">Qui l'escanegi podrà cercar cançons, afegir-les a la cua i canviar-ne l'ordre.</p></div><div class="btnrow"><button class="btn" data-v="">Tanca</button></div>`);
-};
+  const g = S.guests || 0;
+  openSheet(`<h3 style="text-align:center">Jam session</h3><div class="qr"><img src="/api/qr.svg?u=${encodeURIComponent(S.jam_url)}" alt="Codi QR">
+    <p style="margin:10px 0 0">Només qui escanegi aquest codi podrà entrar a la jam (durant ${12} h).<br><b style="color:var(--fg)">${g} ${g === 1 ? 'convidat connectat' : 'convidats connectats'}</b></p></div>
+    ${S.jam_started ? `<p class="s" style="justify-content:center;margin:-6px 0 8px">Jam començada ${new Date(S.jam_started * 1000).toLocaleString('ca', {weekday:'short', day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'})}</p>` : ''}
+    <button class="btn pri block" id="qrParty" style="margin:4px 0 6px">${I('music')}Comença una jam nova</button>
+    <p class="s" style="white-space:normal;justify-content:center;text-align:center;margin:0 0 6px">Codi nou i fora tots els convidats de la festa anterior</p>
+    <button class="opt" id="qrNew">${I('qr')}<span>Només canvia el codi<small>El QR antic deixa de funcionar. Qui ja hi és, s'hi queda.</small></span></button>
+    <div class="btnrow"><button class="btn" data-v="">Tanca</button></div>`);
+  $('#qrNew').onclick = async () => { await act('/api/jam/rotate', 'POST', {kick:false}); toast('Codi nou generat'); showQR(); };
+  $('#qrParty').onclick = async () => {
+    if (g && !await ask({title:'Començar una jam nova?', text:`Els ${g} convidats connectats en sortiran i el QR canviarà. La cua i les llistes no es toquen.`, ok:'Comença-la', danger:true})) return showQR();
+    await act('/api/jam/rotate', 'POST', {kick:true}); toast('Jam nova a punt: ensenya el QR nou'); showQR();
+  };
+}
+$('#qrBtn').onclick = showQR;
 $('#outBtn').onclick = async () => { await fetch('/api/logout', {method:'POST', headers:{'Content-Type':'application/json'}, body:'{}'}); location.reload(); };
-if (GUEST) { $('#qrBtn').hidden = true; $('#outBtn').hidden = true; }
+if (GUEST) {
+  $('#qrBtn').hidden = true; $('#outBtn').hidden = true; $('#jamBar').hidden = false;
+  document.documentElement.dataset.mode = 'jam'; document.querySelector('meta[name=theme-color]').content = '#0f0a1f'; document.title = 'coniMIX · Jam';
+}
 
 // ---------- player (two elements, crossfade between songs) ----------
 const a1 = $('#audio'), a2 = $('#audio2'); let audio = a1;
@@ -561,10 +704,14 @@ function maybeCrossfade() {   // near the end of a song, start the next one unde
   act('/api/queue/next', 'POST', {from}).finally(() => { pendingAdvance = false; syncPlayer(); });
 }
 function renderPlayer() {
-  const s = songOfQ(S.current); const on = !!s;
-  $('#mini').classList.toggle('on', on);
-  document.documentElement.style.setProperty('--bottom', `calc(var(--nav-h) + var(--safe-b) + ${on ? 78 : 0}px)`);
-  if (!on) { closeNP(); return; }
+  const s = songOfQ(S.current), pvOn = !!pvR;
+  const on = !!s && !(tab === 'queue' && !GUEST);   // in the queue view the "now playing" card replaces the mini player
+  $('#mini').classList.toggle('on', on); $('#pvbar').classList.toggle('on', pvOn);
+  const root = document.documentElement.style;
+  root.setProperty('--bottom', `calc(var(--nav-h) + var(--safe-b) + ${(on ? 78 : 0) + (pvOn ? 68 : 0)}px)`);
+  root.setProperty('--pvb', `calc(var(--nav-h) + var(--safe-b) + ${on ? 76 : 6}px)`);
+  if (pvOn) { $('#pvTitle').textContent = pvR.title; $('#pvPlay').innerHTML = I(pv.paused ? 'play' : 'pause'); $('#pvClose').innerHTML = I('x'); }
+  if (!s) { closeNP(); return; }
   const q = S.queue.find(x => x.qid === S.current);
   if ($('#mArt').dataset.id !== q.song_id) { $('#mArt').dataset.id = q.song_id; $('#mArt').src = thumbOf(q.song_id); $('#npArt').src = thumbOf(q.song_id); }
   $('#mTitle').textContent = s.title; $('#mSub').textContent = s.channel || ''; $('#npTitle').textContent = s.title; $('#npSub').textContent = s.channel || '';
@@ -579,6 +726,15 @@ function openNP() { if (GUEST) return; $('#np').classList.add('on'); $('#np').se
 function closeNP() { $('#np').classList.remove('on'); $('#np').setAttribute('aria-hidden', 'true'); }
 $('#mInfo').onclick = openNP; $('#mArt').onclick = openNP; $('#npClose').onclick = closeNP;
 $('#npQueue').onclick = () => { closeNP(); tab = 'queue'; render(); scrollTo(0, 0); };
+// seek bar inside the queue view (same as the one in "Ara sona")
+document.addEventListener('pointerdown', e => { if (e.target.id === 'qSeek') seeking = true; });
+document.addEventListener('input', e => {
+  if (e.target.id !== 'qSeek') return; seeking = true;
+  const p = e.target.value / 10, d = audio.duration || 0; e.target.style.setProperty('--p', p + '%');
+  if (d) { $('#qCur').textContent = fmt(d * p / 100); $('#qRem').textContent = '-' + fmt(d - d * p / 100); }
+});
+document.addEventListener('change', e => { if (e.target.id !== 'qSeek') return; if (audio.duration) audio.currentTime = audio.duration * e.target.value / 1000; seeking = false; });
+document.addEventListener('pointerup', e => { if (e.target.id === 'qSeek') setTimeout(() => { seeking = false; }, 50); });
 $('#seek').addEventListener('input', e => { seeking = true; const p = e.target.value / 10; e.target.style.setProperty('--p', p + '%'); if (audio.duration) $('#tCur').textContent = fmt(audio.duration * p / 100); });
 $('#seek').addEventListener('change', e => { if (audio.duration) audio.currentTime = audio.duration * e.target.value / 1000; seeking = false; });
 for (const el of [a1, a2]) {   // events of the element that is fading out are ignored
@@ -587,11 +743,13 @@ for (const el of [a1, a2]) {   // events of the element that is fading out are i
     $('#mProg').style.width = p + '%';
     if (!seeking) { $('#seek').value = p * 10; $('#seek').style.setProperty('--p', p + '%'); $('#tCur').textContent = fmt(audio.currentTime); }
     $('#tDur').textContent = fmt(audio.duration); maybeCrossfade();
+    const qs = $('#qSeek');
+    if (qs && !seeking) { qs.value = p * 10; qs.style.setProperty('--p', p + '%'); $('#qCur').textContent = fmt(audio.currentTime); $('#qRem').textContent = '-' + fmt(audio.duration - audio.currentTime); }
   });
   el.addEventListener('ended', () => { if (el === audio && !pendingAdvance) act('/api/queue/next', 'POST', {from: loaded}); });
   el.addEventListener('error', () => { if (el === audio && loaded != null && el.getAttribute('src') && el.getAttribute('src') !== SILENT) { toast('No es pot reproduir aquesta cançó, la salto'); act('/api/queue/next', 'POST', {from: loaded}); } });
-  el.addEventListener('play', () => { if (el !== audio) return; renderPlayer(); requestAwake(); document.querySelectorAll('.eq').forEach(x => x.classList.remove('paused')); });
-  el.addEventListener('pause', () => { if (el !== audio) return; if (fadeState) fadeState.old.pause(); renderPlayer(); if (!el.ended) releaseAwake(); document.querySelectorAll('.eq').forEach(x => x.classList.add('paused')); });
+  el.addEventListener('play', () => { if (el !== audio) return; if (pvR) stopPreview(); renderPlayer(); const b = $('[data-act=nptoggle]'); if (b) b.innerHTML = I('pause'); requestAwake(); document.querySelectorAll('.eq').forEach(x => x.classList.remove('paused')); });
+  el.addEventListener('pause', () => { if (el !== audio) return; if (fadeState) fadeState.old.pause(); renderPlayer(); const b = $('[data-act=nptoggle]'); if (b) b.innerHTML = I('play'); if (!el.ended) releaseAwake(); document.querySelectorAll('.eq').forEach(x => x.classList.add('paused')); });
 }
 async function requestAwake() {   // keep the phone awake while playing
   if ('wakeLock' in navigator) { try { wl = await navigator.wakeLock.request('screen'); wl.addEventListener('release', () => wl = null); return; } catch {} }
@@ -604,24 +762,64 @@ if ('mediaSession' in navigator && !GUEST) {
   navigator.mediaSession.setActionHandler('nexttrack', skip);
 }
 
+// ---------- preview: listen to a search result on this device before adding it ----------
+const pv = $('#pv'); let pvR = null;
+function stopPreview() { pv.pause(); pv.removeAttribute('src'); pvR = null; renderPlayer(); lastSig = ''; render(); }
+async function previewResult(r) {
+  if (!r) return;
+  if (pvR && pvR.id === r.id) { if (pv.paused) pv.play(); else pv.pause(); return; }
+  if (!GUEST && !audio.paused) return toast('Atura la cua per escoltar una prèvia');
+  const s = statusOf(r.id);
+  if (!s || s.status === 'error') {
+    try { await api('/api/prefetch', 'POST', metaOf(r)); pvWait = r; toast("Descarregant-la… t'avisaré quan la puguis escoltar"); } catch {}
+    lastSig = ''; poll(); return;
+  }
+  if (s.status !== 'ready') { pvWait = r; return toast(`Encara es descarrega (${Math.round(s.progress)}%)`); }
+  pvR = r; pv.src = `/media/${r.id}.mp3`; pv.play().catch(() => toast("No s'ha pogut reproduir la prèvia")); renderPlayer();
+}
+pv.addEventListener('play', () => { renderPlayer(); lastSig = ''; render(); });
+pv.addEventListener('pause', () => { if (!pvR) return; renderPlayer(); lastSig = ''; render(); });
+pv.addEventListener('ended', stopPreview);
+pv.addEventListener('timeupdate', () => { if (!pv.duration) return; $('#pvProg').style.width = (pv.currentTime / pv.duration * 100) + '%'; $('#pvTime').textContent = fmt(pv.currentTime) + ' / ' + fmt(pv.duration); });
+$('#pvPlay').onclick = () => { if (!GUEST && !audio.paused && pv.paused) return toast('Atura la cua per escoltar una prèvia'); pv.paused ? pv.play() : pv.pause(); };
+$('#pvClose').onclick = stopPreview;
+
 // ---------- login / boot ----------
 let timer = null;
 function showLogin() {
   clearInterval(timer); document.body.dataset.login = '1'; audio.pause();
   ['#mini', '#nav'].forEach(s => $(s).style.display = 'none'); $('#qrBtn').hidden = $('#outBtn').hidden = true;
-  $('#main').innerHTML = `<form class="login" id="lf"><div class="mark">${I('music')}</div><h1>SpotiTxell</h1><p class="sub">Inicia la sessió per gestionar la teva música</p>
+  $('#main').innerHTML = `<form class="login" id="lf"><img class="brand" src="/static/logo.jpg" alt="coniMIX"><p class="sub">Inicia la sessió per gestionar la teva música</p>
     <div class="field"><input type="text" value="propietari" autocomplete="username" hidden>
-    <div class="searchbar" style="margin:0"><input type="password" id="pw" placeholder="Contrasenya" autocomplete="current-password" required></div>
+    <div class="searchbar" style="margin:0"><input type="password" id="pw" placeholder="Contrasenya" autocomplete="current-password" autocapitalize="off" autocorrect="off" spellcheck="false" required><button type="button" class="x" id="eye" aria-label="Mostra la contrasenya" style="width:40px;height:40px">${I('eye')}</button></div>
     <label class="chk"><input type="checkbox" id="rem" checked><span>Recorda'm en aquest dispositiu</span></label>
     <button class="btn pri block">Entra</button><div id="lerr" class="s" style="color:var(--danger);justify-content:center;white-space:normal"></div>
-    <p class="s" style="justify-content:center;white-space:normal;margin:6px 0 0">Només vols afegir cançons? <a href="/jam" style="color:var(--acc);margin-left:4px">Entra a la jam</a></p></div></form>`;
+    <p class="s" style="justify-content:center;white-space:normal;margin:6px 0 0">Per afegir cançons a la festa, escaneja el codi QR de l'amfitrió.</p></div></form>`;
+  $('#eye').onclick = () => { const i = $('#pw'); i.type = i.type === 'password' ? 'text' : 'password'; };
   $('#lf').onsubmit = async e => {
     e.preventDefault(); $('#lerr').textContent = '';
     const r = await fetch('/api/login', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({password:$('#pw').value, remember:$('#rem').checked})});
     if (r.ok) location.reload(); else $('#lerr').textContent = (await r.json().catch(() => ({}))).error || 'Error';
   };
 }
+function showJamLocked(msg) {
+  clearInterval(timer); document.body.dataset.login = '1'; pv.pause();
+  ['#mini', '#nav', '#pvbar'].forEach(s => $(s).style.display = 'none'); $('#jamBar').hidden = true;
+  $('#main').innerHTML = `<div class="login"><img class="brand" src="/static/logo.jpg" alt="coniMIX">
+    <h1 style="font-size:24px">Benvingut a la jam!</h1><p class="sub">${esc(msg || "Per entrar-hi, escaneja amb la càmera el codi QR que et mostrarà l'amfitrió.")}</p>
+    <a class="btn block" href="/" style="text-decoration:none">Sóc l'amfitrió</a></div>`;
+}
 (async () => {
+  if (GUEST) {
+    const k = new URLSearchParams(location.search).get('k'); let joinErr = '';
+    if (k) {
+      const r = await fetch('/api/jam/join', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({k})});
+      if (!r.ok) joinErr = (await r.json().catch(() => ({}))).error || '';
+      history.replaceState(null, '', '/jam');   // the code is not kept in the address bar
+    }
+    const me = await (await fetch('/api/me')).json().catch(() => ({}));
+    if (!me.guest) return showJamLocked(joinErr);
+  }
   if (!GUEST) { const me = await (await fetch('/api/me')).json().catch(() => ({})); if (!me.owner) return showLogin(); }
   render(); await poll(); timer = setInterval(poll, 1500);
 })();
