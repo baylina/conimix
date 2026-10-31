@@ -537,7 +537,10 @@ function offPoll() {
 let probeAt = 0, reconnecting = false, offTouched = false;   // offTouched: the queue was used without a connection
 async function offProbe(now) {   // is the PC reachable again?
   if (reconnecting || (!now && performance.now() - probeAt < 5000)) return; probeAt = performance.now();
-  try { const r = await fetchT('/api/me', 5000); if (r.status >= 500 || !(await r.json()).owner) return; } catch { return; }
+  let me;
+  try { const r = await fetchT('/api/me', 5000); if (r.status >= 500 || !(me = await r.json()).owner) return; } catch { return; }
+  // opened without a connection, the user was never loaded: without it the AI buttons, name and logo stay hidden
+  if (me.user) { ME = me.user; applyBrand(ME); lsSet('cm-xfade', ME.xfade); }
   reconnect();
 }
 // Back online without reloading: what is playing goes on, at the same point, and the server takes over the phone's queue.
