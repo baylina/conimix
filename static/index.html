@@ -29,6 +29,7 @@
   input { font:inherit; color:inherit; }
   svg.ic { width:22px; height:22px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; flex:none; }
   svg.ic.f { fill:currentColor; }
+  .link svg.ic.sm { width:15px; height:15px; vertical-align:-2px; margin-right:4px; }
 
   /* app bar */
   .appbar { position:sticky; top:0; z-index:20; display:flex; align-items:center; justify-content:space-between; padding:calc(10px + var(--safe-t)) 16px 10px; background:rgba(11,11,13,.82); backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px); border-bottom:1px solid var(--line); }
@@ -46,6 +47,7 @@
   :root[data-mode=jam] .row { background:transparent; }
   .jambar { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:9px 16px; background:linear-gradient(90deg,#3a1b73,#6a1f66); border-bottom:1px solid var(--line); font-size:13px; }
   .jambar span { color:#f0e6ff; line-height:1.25; }
+  .jambar.offbar { background:linear-gradient(90deg,#3d2a0e,#5c3b10); }
   .jambar .jbtn { flex:none; background:var(--acc); color:var(--acc-ink); font-weight:700; padding:8px 14px; border-radius:999px; text-decoration:none; font-size:13px; white-space:nowrap; }
   main { max-width:720px; margin:0 auto; padding:6px 16px calc(var(--bottom) + 28px); min-height:70vh; }
   h1.title { font-size:30px; font-weight:800; letter-spacing:-.03em; margin:14px 0 14px; }
@@ -78,6 +80,10 @@
   .s .ok { color:var(--acc); display:inline-flex; align-items:center; gap:3px; }
   .s .ok svg { width:13px; height:13px; stroke-width:3; }
   .s .er { color:var(--danger); white-space:normal; }
+  .s .wt { color:#f5b544; white-space:normal; }
+  .note.fail { color:var(--fg); }
+  .note.fail b { display:block; } .note.fail span { color:var(--mut); }
+  .note.fail .btnrow { margin:10px 0 0; } .note.fail .btn { height:38px; font-size:14px; }
   .rb { width:40px; height:40px; border-radius:50%; display:grid; place-items:center; color:var(--mut); flex:none; }
   .rb.play { background:var(--acc); color:var(--acc-ink); }
   .rb.add { background:var(--s3); color:var(--fg); }
@@ -162,11 +168,80 @@
   input[type=range]::-moz-range-progress { height:6px; border-radius:3px; background:var(--acc); }
   input[type=range]::-moz-range-thumb { width:26px; height:26px; border:0; border-radius:50%; background:#fff; box-shadow:0 2px 8px rgba(0,0,0,.45), 0 0 0 4px rgba(30,215,96,.25); }
   .times { display:flex; justify-content:space-between; color:var(--mut); font-size:12px; margin-top:-2px; }
+  /* lyrics: full screen over "Ara sona"; synced lines light up as the song goes */
+  #ly { position:fixed; inset:0; z-index:55; background:linear-gradient(180deg,#221a3a 0%,#0b0b0d 70%); transform:translateY(105%); transition:transform .3s cubic-bezier(.2,.8,.2,1); display:flex; flex-direction:column; padding:calc(10px + var(--safe-t)) 0 calc(12px + var(--safe-b)); }
+  #ly.on { transform:none; }
+  #ly .top { display:flex; align-items:center; gap:6px; padding:0 12px; max-width:720px; width:100%; margin:0 auto; }
+  #ly .top .mt { flex:1; min-width:0; text-align:center; }
+  #ly .top .t { font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  #ly .top .s { color:var(--mut); font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  #ly .lang { display:inline-block; font-size:11px; font-weight:700; padding:1px 8px; border-radius:99px; background:rgba(255,255,255,.14); color:var(--fg); margin-left:6px; vertical-align:1px; }
+  #lyBody { flex:1; overflow-y:auto; padding:20px 24px 45vh; max-width:720px; width:100%; margin:0 auto; -webkit-overflow-scrolling:touch; }
+  #lyBody.plain, #lyBody.none { padding-bottom:40px; }
+  .ll { font-size:22px; font-weight:700; line-height:1.35; padding:6px 0; color:rgba(255,255,255,.36); letter-spacing:-.01em; cursor:pointer; transition:color .2s; }
+  #ly.big .ll { font-size:29px; }
+  .ll.past { color:rgba(255,255,255,.62); }
+  .ll.on { color:var(--fg); }
+  .ll.loop { color:var(--acc); }
+  #lyBody.plain .ll { color:var(--fg); font-weight:600; font-size:19px; cursor:auto; padding:3px 0; }
+  #ly.big #lyBody.plain .ll { font-size:25px; }
+  #lyBody.plain .ll.gap { height:16px; }
+  .lysrc { color:var(--mut); font-size:13px; margin-top:28px; line-height:1.5; }
+  .lysrc .link { color:var(--acc); }
+  .lyform { display:flex; gap:8px; margin-top:14px; } .lyform .sinput { margin:0; flex:1; }
+  .lyform .jbtn { flex:none; }
+  .lyctrl { display:flex; justify-content:center; align-items:center; gap:26px; padding-top:8px; }
+  .lyctrl button { width:52px; height:52px; border-radius:50%; display:grid; place-items:center; color:var(--fg); }
+  .lyctrl button:active { background:var(--s3); }
+  .lyctrl .big { width:62px; height:62px; background:var(--fg); color:#000; }
+  .lyctrl .big:active { background:#ddd; }
+  .lyctrl .on { background:var(--acc); color:var(--acc-ink); }
+  .lyctrl .k { font-size:10px; font-weight:800; margin-top:-4px; }
+  .lysync { display:flex; justify-content:center; align-items:center; gap:8px; padding-top:6px; font-size:13px; color:var(--mut); }
+  .lysync button { min-width:44px; height:32px; padding:0 10px; border-radius:99px; background:rgba(255,255,255,.08); color:var(--fg); font-weight:700; font-size:13px; }
+  .lysync button:active { background:var(--s3); }
+  .lysync #lyOff { min-width:132px; }
+  .lysync #lyOff.on { background:var(--acc); color:var(--acc-ink); }
+  #lyBody.pick .ll[data-i] { color:rgba(255,255,255,.8); }
   .ctrls { display:flex; align-items:center; justify-content:center; gap:34px; margin:16px 0 8px; }
   .ctrls .big { width:72px; height:72px; border-radius:50%; background:var(--fg); color:#000; display:grid; place-items:center; }
   .ctrls .big svg { width:30px; height:30px; }
   .ctrls .sm { width:52px; height:52px; display:grid; place-items:center; border-radius:50%; }
   .ctrls .sm svg { width:28px; height:28px; }
+  /* "next": bigger, and it answers the tap (colour flash + bounce) so you know it went through */
+  .nextb { position:relative; transition:background .15s, color .15s, transform .1s; -webkit-tap-highlight-color:transparent; }
+  .nextb:active { background:var(--acc) !important; color:var(--acc-ink) !important; transform:scale(.88); }
+  .nextb.fx { animation:nextfx .5s ease-out both; }
+  @keyframes nextfx { 0% { transform:scale(.82); background:var(--acc); color:var(--acc-ink); box-shadow:0 0 0 0 rgba(30,215,96,.7); }
+    45% { transform:scale(1.12); background:var(--acc); color:var(--acc-ink); box-shadow:0 0 0 14px rgba(30,215,96,0); }
+    100% { transform:scale(1); box-shadow:0 0 0 0 rgba(30,215,96,0); } }
+  #mini .rb.nextb { width:50px; height:50px; color:var(--fg); }
+  #mini .rb.nextb svg { width:28px; height:28px; }
+  .ctrls .sm.nextb { width:68px; height:68px; color:var(--fg); }
+  .ctrls .sm.nextb svg { width:36px; height:36px; }
+  .npcard .rb.nextb { width:52px; height:52px; color:var(--fg); }
+  .npcard .rb.nextb svg { width:30px; height:30px; }
+  /* sleep timer: the moon turns green and shows the minutes left */
+  .offb { position:relative; }
+  .offb.on { color:var(--acc); }
+  .offb .left { position:absolute; bottom:-4px; left:50%; transform:translateX(-50%); font-size:9px; font-weight:800; line-height:1; background:var(--acc); color:var(--acc-ink); border-radius:6px; padding:2px 4px; white-space:nowrap; }
+  .sleepb { position:relative; }
+  .sleepb.on { color:var(--acc); }
+  .sleepb .left { position:absolute; bottom:-2px; left:50%; transform:translateX(-50%); font-size:10px; font-weight:800; line-height:1; background:var(--acc); color:var(--acc-ink); border-radius:6px; padding:2px 4px; white-space:nowrap; }
+  .sleepchip { display:inline-flex; align-items:center; gap:5px; height:26px; padding:0 10px; border-radius:999px; background:var(--s3); color:var(--mut); font-size:12px; font-weight:700; margin-top:-2px; }
+  .sleepchip svg.ic { width:14px; height:14px; }
+  .sleepchip.on { background:var(--acc); color:var(--acc-ink); }
+  .row.osel { cursor:pointer; }
+  .row.osel .tick { width:26px; height:26px; flex:none; border-radius:50%; border:2px solid var(--mut); display:grid; place-items:center; }
+  .row.osel .tick svg.ic { width:16px; height:16px; stroke-width:3; }
+  .row.osel.on { background:var(--s2); }
+  .row.osel.on .tick { background:var(--acc); border-color:var(--acc); color:var(--acc-ink); }
+  .oselbar { position:sticky; top:calc(64px + var(--safe-t)); z-index:5; background:var(--bg); padding:6px 0; }
+  /* three buttons in one row (Llistes): smaller, so they fit on a phone */
+  .btnrow.tight { gap:8px; }
+  .btnrow.tight .btn { flex:1 1 auto; min-width:0; padding:0 8px; gap:5px; font-size:13px; }
+  .btnrow.tight .btn svg.ic { width:18px; height:18px; }
+  .btn.spbtn { background:#1db954; color:#04130a; }
 
   #toast { position:fixed; left:50%; transform:translate(-50%,20px); bottom:calc(var(--bottom) + 16px); background:#f5f5f7; color:#111; padding:10px 18px; border-radius:999px; font-weight:600; font-size:14px; opacity:0; pointer-events:none; transition:.25s; z-index:90; max-width:90vw; box-shadow:0 8px 24px rgba(0,0,0,.4); text-align:center; }
   #toast.on { opacity:1; transform:translate(-50%,0); }
@@ -185,6 +260,45 @@
   .searchbar .go { width:38px; height:38px; border-radius:50%; background:var(--acc); display:grid; place-items:center; flex:none; margin-right:-6px; }
   .searchbar .go svg { color:var(--acc-ink); width:18px; height:18px; stroke-width:2.6; }
   .hint { color:var(--mut); font-size:12.5px; margin:-4px 4px 12px; }
+  /* AI search: describe the song in words (typed or dictated) */
+  .searchbar .aib { flex:none; height:30px; padding:0 9px; border-radius:999px; background:var(--s3); color:var(--mut); font-size:12px; font-weight:800; display:inline-flex; align-items:center; gap:4px; margin-left:-6px; }
+  .searchbar .aib svg { width:15px; height:15px; }
+  .searchbar .aib.on { background:linear-gradient(90deg,#7c5cff,#ff6bd6); color:#fff; }
+  .searchbar.ai { height:auto; flex-wrap:wrap; align-items:center; gap:6px 10px; padding:4px 14px 8px; border-color:#7c5cff; }
+  .searchbar.ai textarea { flex-basis:100%; order:-1; }   /* the text gets the whole width, the buttons go below */
+  .searchbar.ai .aib { margin-left:0; } .searchbar.ai .x { margin-left:auto; }
+  .searchbar textarea { flex:1; min-width:0; background:none; border:0; outline:0; resize:none; font:inherit; font-size:16px; line-height:1.35; color:inherit; padding:9px 0; max-height:32vh; }
+  .searchbar textarea::placeholder { color:var(--mut); }
+  .searchbar .mic { width:36px; height:36px; border-radius:50%; display:grid; place-items:center; color:var(--fg); flex:none; }
+  .searchbar .mic svg { width:19px; height:19px; }
+  .searchbar .mic.rec { background:var(--danger); color:#fff; animation:pulse 1.1s ease-in-out infinite; }
+  @keyframes pulse { 50% { box-shadow:0 0 0 7px rgba(255,107,107,.25); } }
+  /* searching: a spinner on the search button and a moving line above the results */
+  @keyframes spin { to { transform:rotate(360deg); } }
+  .searchbar.busy .go svg { display:none; }
+  .searchbar.busy .go::after { content:''; width:18px; height:18px; border-radius:50%; border:2.6px solid var(--acc-ink); border-right-color:transparent; animation:spin .7s linear infinite; }
+  .searching { display:flex; align-items:center; gap:10px; font-weight:600; font-size:14px; margin:2px 4px 12px; }
+  .searching .spin { width:20px; height:20px; border-radius:50%; border:3px solid var(--s3); border-top-color:var(--acc); animation:spin .8s linear infinite; flex:none; }
+  .searching.ai .spin { border-top-color:#b89bff; }
+  .searching .dots::after { content:''; animation:dots 1.2s steps(4) infinite; }
+  @keyframes dots { 0% { content:''; } 25% { content:'.'; } 50% { content:'..'; } 75% { content:'...'; } }
+  .btn.aibtn { background:linear-gradient(90deg,#7c5cff,#ff6bd6); color:#fff; }
+  #sheet h3 .ic { width:20px; height:20px; vertical-align:-3px; color:#b89bff; }
+  #sheet .searchbar.ai .mic { margin-left:auto; }
+  .note.ainote { display:flex; gap:8px; color:#e4d9ff; background:rgba(124,92,255,.14); }
+  .note.ainote svg { width:16px; height:16px; color:#b89bff; flex:none; margin-top:1px; }
+  /* search results: more detail (uploader, views, date), even if it takes more room */
+  .rrow { align-items:flex-start; padding:10px 6px; }
+  .thw { position:relative; width:128px; aspect-ratio:16/9; border-radius:10px; overflow:hidden; background:var(--s3); flex:none; }
+  .thw img { width:100%; height:100%; object-fit:cover; display:block; }
+  .thw .dur { position:absolute; right:4px; bottom:4px; background:rgba(0,0,0,.82); color:#fff; font-size:11px; font-weight:700; padding:1px 5px; border-radius:4px; }
+  .rrow .t2 { font-weight:600; line-height:1.3; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; word-break:break-word; }
+  .rrow .s { white-space:normal; margin-top:2px; }
+  .rrow .racts { display:flex; flex-direction:column; gap:6px; flex:none; }
+  .rrow .why { font-size:13px; color:#d9c8ff; margin-top:5px; line-height:1.3; }
+  .aitag { font-size:11.5px; font-weight:700; color:#b89bff; display:flex; gap:4px; align-items:center; margin-bottom:3px; }
+  .aitag svg { width:13px; height:13px; }
+  @media (max-width:420px) { .thw { width:112px; } }
   /* swipe rows (owner): slide left to reveal actions */
   .row.swipe { display:block; padding:0; overflow:hidden; }
   .row.swipe.cur { background:none; }
@@ -211,14 +325,15 @@
 <body>
 <header class="appbar">
   <div class="logo"><img class="mark" src="/static/avatar.jpg" alt=""><span>coni<b>MIX</b></span></div>
-  <div class="actions"><button class="ib" id="qrBtn" aria-label="Jam session"></button><button class="ib" id="outBtn" aria-label="Tanca la sessió"></button></div>
+  <div class="actions"><button class="ib" id="qrBtn" aria-label="Jam session"></button><button class="ib" id="outBtn" aria-label="El teu perfil"></button></div>
 </header>
 <div class="jambar" id="jamBar" hidden><span>Ets a la jam com a convidat</span><a class="jbtn" href="/">Accedeix com a amfitrió</a></div>
+<div class="jambar offbar" id="offBar" hidden><span id="offTxt">Sense connexió · sonen les cançons guardades al mòbil. Es tornarà a connectar sola.</span></div>
 <main id="main"></main>
 
 <div id="mini"><div class="prog" id="mProg"></div>
   <img class="th" id="mArt" alt=""><div class="mt" id="mInfo"><div class="t" id="mTitle"></div><div class="s" id="mSub"></div></div>
-  <button class="rb" id="mPlay" aria-label="Reprodueix / pausa"></button><button class="rb" id="mNext" aria-label="Següent"></button>
+  <button class="rb" id="mPlay" aria-label="Reprodueix / pausa"></button><button class="rb nextb" id="mNext" aria-label="Següent"></button>
 </div>
 <div id="pvbar"><button class="rb play" id="pvPlay" aria-label="Reprodueix / pausa la prèvia"></button>
   <div class="mt"><div class="k">Prèvia</div><div class="t" id="pvTitle"></div><div class="pvprog"><i id="pvProg"></i></div></div>
@@ -226,12 +341,19 @@
 <nav id="nav"></nav>
 
 <section id="np" aria-hidden="true">
-  <div class="top"><button class="ib" id="npClose" aria-label="Tanca"></button><span>Ara sona</span><span style="width:42px"></span></div>
+  <div class="top"><button class="ib" id="npClose" aria-label="Tanca"></button><span>Ara sona</span><span style="display:flex;gap:4px"><button class="ib sleepb" id="npSleep" aria-label="Temporitzador per aturar la música"></button><button class="ib" id="npLyrics" aria-label="Lletra de la cançó"></button></span></div>
   <div class="art"><img id="npArt" alt=""></div>
   <h2 id="npTitle"></h2><div class="ch" id="npSub"></div>
   <input type="range" id="seek" min="0" max="1000" value="0">
   <div class="times"><span id="tCur">0:00</span><span id="tDur">0:00</span></div>
-  <div class="ctrls"><button class="sm" id="npQueue" aria-label="Cua"></button><button class="big" id="npPlay" aria-label="Reprodueix / pausa"></button><button class="sm" id="npNext" aria-label="Següent"></button></div>
+  <div class="ctrls"><button class="sm" id="npQueue" aria-label="Cua"></button><button class="big" id="npPlay" aria-label="Reprodueix / pausa"></button><button class="sm nextb" id="npNext" aria-label="Següent"></button></div>
+</section>
+
+<section id="ly" aria-hidden="true">
+  <div class="top"><button class="ib" id="lyClose" aria-label="Tanca la lletra"></button><div class="mt"><div class="t" id="lyTitle"></div><div class="s" id="lySub"></div></div><button class="ib" id="lyBig" aria-label="Mida de la lletra"></button></div>
+  <div id="lyBody"></div>
+  <div class="lysync" id="lySync"><button id="lyEarly" aria-label="La lletra va tard: avança-la mig segon">−0,5 s</button><button id="lyOff" aria-label="Sincronitza la lletra: toca la frase que sona ara"></button><button id="lyLate" aria-label="La lletra va avançada: endarrereix-la mig segon">+0,5 s</button></div>
+  <div class="lyctrl" id="lyCtrl"><button id="lyBack" aria-label="Enrere 5 segons"></button><button class="big" id="lyPlay" aria-label="Reprodueix / pausa"></button><button id="lyLoop" aria-label="Repeteix la frase"></button></div>
 </section>
 
 <div id="backdrop"></div><div id="sheet" role="dialog"></div>
@@ -241,6 +363,9 @@
 
 <script>
 const GUEST = location.pathname.startsWith('/jam');
+// in the jam the server must answer as the host's guest even when this browser is also logged in to its own account
+const JQ = GUEST ? '?jam=1' : '';
+if (GUEST) { const f = window.fetch; window.fetch = (u, o = {}) => f(u, {...o, headers:{...o.headers, 'X-Jam':'1'}}); }
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmt = s => { if (!s && s !== 0) return ''; s = Math.round(s); const h = s/3600|0, m = (s%3600)/60|0, x = s%60;
@@ -255,11 +380,22 @@ const P = {
   queue:'<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>', lists:'<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>',
   down:'<path d="M6 9l6 6 6-6"/>', right:'<path d="M9 18l6-6-6-6"/>', left:'<path d="M15 18l-6-6 6-6"/>',
   grip:'<circle cx="9" cy="6" r="1.5"/><circle cx="15" cy="6" r="1.5"/><circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/><circle cx="9" cy="18" r="1.5"/><circle cx="15" cy="18" r="1.5"/>',
-  x:'<path d="M18 6L6 18M6 6l12 12"/>', check:'<path d="M20 6L9 17l-5-5"/>', qr:'<path d="M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h3v3h-3zM20 14v.01M14 20h.01M20 20h.01M17 17h3v3"/>',
+  x:'<path d="M18 6L6 18M6 6l12 12"/>', spark:'<path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/>',
+  mic:'<rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 17v4M8 21h8"/>', retry:'<path d="M21 12a9 9 0 1 1-2.64-6.36L21 8"/><path d="M21 3v5h-5"/>', check:'<path d="M20 6L9 17l-5-5"/>', qr:'<path d="M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h3v3h-3zM20 14v.01M14 20h.01M20 20h.01M17 17h3v3"/>',
   out:'<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>', edit:'<path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>',
   head:'<path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/>',
   eye:'<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>',
-  music:'<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>', folder:'<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
+  phone:'<rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M11 18h2"/>',
+  user:'<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
+  shuffle:'<path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/>',
+  music:'<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>',
+  lyrics:'<path d="M4 5h16M4 10h16M4 15h9M4 20h6"/><path d="M19 13v6.5"/><circle cx="17" cy="19.5" r="2"/>',
+  loop:'<path d="M17 2l4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/>',
+  download:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>',
+  upload:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/>',
+  moon:'<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>',
+  spotify:'<circle cx="12" cy="12" r="10"/><path d="M7 9.5c3.5-1 7.5-.6 10.5 1M7.6 12.6c2.9-.8 6.1-.4 8.6 1M8.2 15.6c2.3-.6 4.7-.3 6.7.8"/>',
+  back:'<path d="M3 12a9 9 0 1 0 2.64-6.36L3 8"/><path d="M3 3v5h5"/>', size:'<path d="M3 20l5-14 5 14M5 15h6M14 20l3.5-9 3.5 9M15.2 17h4.6"/>', folder:'<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
 };
 const FILLED = new Set(['play','pause','next','grip','more']);
 const I = (n, cls='') => `<svg class="ic ${FILLED.has(n)?'f ':''}${cls}" viewBox="0 0 24 24">${P[n]}</svg>`;
@@ -275,6 +411,7 @@ const TABS = GUEST ? [['search','Cerca','search'],['queue','Cua','queue']] : [['
 // ---------- api / toast ----------
 function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('on'), 2600); }
 async function api(path, method = 'GET', body) {
+  if (OFFLINE) return localApi(path, method, body);
   const r = await fetch(path, {method, headers:{'Content-Type':'application/json'}, body: body ? JSON.stringify(body) : undefined});
   const j = await r.json().catch(() => ({}));
   if (r.status === 401 && !GUEST && path !== '/api/login') { showLogin(); throw new Error('login'); }
@@ -285,17 +422,185 @@ async function api(path, method = 'GET', body) {
 async function act(path, method, body) { try { const r = await api(path, method, body); lastSig = ''; await poll(); return r; } catch { lastSig = ''; await poll(); return null; } }
 let pollSeq = 0;
 async function poll() {
+  if (OFFLINE) return offPoll();
   const my = ++pollSeq; let st, rs = RS;
-  try { const r = await fetch('/api/state', {cache:'no-store'}); if (r.status === 401) { if (GUEST) showJamLocked("La jam s'ha tancat o el codi ha canviat. Torna a escanejar el QR."); else showLogin(); return; } st = await r.json(); } catch { return; }
+  try { const r = await fetch('/api/state', {cache:'no-store'}); if (r.status === 401) { if (GUEST) showJamLocked("La jam s'ha tancat o el codi ha canviat. Torna a escanejar el QR."); else showLogin(); return; }
+    if (r.status >= 500) throw 0;   // the PC is off: the tunnel answers with an error page
+    st = await r.json(); } catch { netDown(); return; }
+  netFails = 0;
   const ids = [...new Set([...SQ.res, ...PQ.res].map(r => r.id))];
   if (ids.length) { try { rs = await (await fetch('/api/songs?ids=' + ids.join(','), {cache:'no-store'})).json(); } catch {} }
   if (my !== pollSeq) return;
   const sig = JSON.stringify([st, rs]);
-  if (sig === lastSig) return; lastSig = sig; S = st; RS = rs;
+  if (sig === lastSig) return; lastSig = sig; S = st; RS = rs; if (GUEST) applyBrand(S.brand);
   if (pvWait && statusOf(pvWait.id)?.status === 'ready') { toast(`«${pvWait.title.slice(0, 40)}» ja es pot escoltar`); pvWait = null; }
   syncPlayer(); if (!dragging && !seeking && !swipeOpen) render();
+  offSync();
 }
 const statusOf = id => S.songs[id] || RS[id];
+
+// ---------- on the phone: songs saved to listen without a connection ----------
+// What is kept follows the lists marked "Al mòbil" (or every song): new songs are saved and removed ones deleted while online.
+// Without a connection the app runs on its own: the lists and songs saved here, and a queue of its own.
+const SONG_CACHE = 'conimix-songs', CAN_SAVE = !GUEST && 'caches' in window;
+const lsGet = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
+let OFFLINE = false, netFails = 0, OFF = new Set();   // OFF: ids of the songs saved on the phone
+const OC = lsGet('cm-off', {all:false, pls:[]});   // what to keep on the phone
+let OLIB = lsGet('cm-offlib', {songs:{}, playlists:[]});   // titles and lists, for when there is no connection
+let LQS = lsGet('cm-offq', {queue:[], current:null, seq:1});   // the queue without a connection
+const OD = {busy:false, done:0, total:0, usage:0, failed:new Set()};
+const softRender = () => { lastSig = ''; if (!dragging && !seeking && !swipeOpen) render(); };
+const fetchT = (u, ms) => { const c = new AbortController(), t = setTimeout(() => c.abort(), ms); return fetch(u, {cache:'no-store', signal:c.signal}).finally(() => clearTimeout(t)); };
+async function offLoad() {
+  if (!CAN_SAVE) return;
+  try { const c = await caches.open(SONG_CACHE); OFF = new Set((await c.keys()).map(r => new URL(r.url).pathname.match(/^\/media\/(.+)\.mp3$/)?.[1]).filter(Boolean)); } catch {}
+  offUsage();
+}
+function offUsage() { navigator.storage?.estimate?.().then(e => { OD.usage = e.usage || 0; softRender(); }).catch(() => {}); }
+const fmtMB = b => b >= 1e9 ? (b / 1e9).toFixed(1).replace('.', ',') + ' GB' : Math.round(b / 1e6) + ' MB';
+function offWanted() {
+  const ids = OC.all ? Object.keys(S.songs) : S.playlists.filter(p => OC.pls.includes(p.id)).flatMap(p => p.songs);
+  return new Set(ids.filter(id => S.songs[id]?.status === 'ready'));
+}
+const plOnPhone = pl => OC.all || OC.pls.includes(pl.id);
+async function offSync() {   // online only: make the phone hold exactly what is marked
+  if (!CAN_SAVE || OFFLINE || OD.busy || !S.owner) return;
+  OC.pls = OC.pls.filter(id => S.playlists.some(p => p.id === id)); lsSet('cm-off', OC);
+  const songs = {}; for (const id of OFF) if (S.songs[id]) songs[id] = S.songs[id];
+  OLIB = {songs, playlists: S.playlists.map(p => ({id:p.id, name:p.name, songs:p.songs}))}; lsSet('cm-offlib', OLIB);
+  const want = offWanted(); let c;
+  try { c = await caches.open(SONG_CACHE); } catch { return; }
+  let gone = 0;
+  for (const id of [...OFF]) if (!want.has(id)) { await c.delete(`/media/${id}.mp3`); await c.delete(`/media/${id}.jpg`); OFF.delete(id); gone++; }
+  const todo = [...want].filter(id => !OFF.has(id) && !OD.failed.has(id));
+  if (!todo.length) { if (gone) { offUsage(); softRender(); } return; }
+  OD.busy = true; OD.done = 0; OD.total = todo.length; softRender();
+  navigator.storage?.persist?.().catch(() => {});   // ask iOS not to clear it
+  for (const id of todo) {
+    if (OFFLINE) break;
+    try {
+      const r = await fetch(`/media/${id}.mp3`, {cache:'no-store'});
+      if (r.status !== 200) throw new Error('http');
+      await c.put(`/media/${id}.mp3`, r);
+      try { const t = await fetch(`/media/${id}.jpg`); if (t.ok) await c.put(`/media/${id}.jpg`, t); } catch {}
+      OFF.add(id); if (S.songs[id]) OLIB.songs[id] = S.songs[id];
+    } catch (e) {
+      if (e?.name === 'QuotaExceededError') { toast('No queda espai al mòbil'); break; }
+      OD.failed.add(id);   // not again until the app is opened again
+    }
+    OD.done++; softRender();
+  }
+  OD.busy = false; lsSet('cm-offlib', OLIB); offUsage(); softRender();
+  if (!OFFLINE) offSync();   // anything marked while it was saving
+}
+async function offMenu() {
+  const v = await menu({title:'Al mòbil', sub:`${OFF.size} ${OFF.size === 1 ? 'cançó' : 'cançons'}${OD.usage ? ' · ' + fmtMB(OD.usage) : ''}`, items:[
+    OC.all ? {v:'some', icon:'lists', label:'Només les llistes marcades', sub:'Es marquen des de cada llista, amb la icona de descàrrega'}
+      : {v:'all', icon:'phone', label:'Desa-hi totes les cançons', sub:'Tota la biblioteca, per escoltar-la sense connexió'},
+    ...(OFF.size ? [{v:'del', icon:'trash', label:'Esborra-ho tot del mòbil', sub:'Al PC no es toca res', danger:true}] : [])]});
+  if (v === 'all') OC.all = true;
+  else if (v === 'some') OC.all = false;
+  else if (v === 'del' && await ask({title:'Esborrar-ho tot del mòbil?', text:'Les cançons es mantenen al PC. Sense connexió no en podràs escoltar cap.', ok:'Esborra', danger:true})) { OC.all = false; OC.pls = []; }
+  else return;
+  lsSet('cm-off', OC); softRender(); offSync();
+}
+async function togglePlOff(pl) {
+  if (OC.all) return toast('Ja es desen totes les cançons al mòbil');
+  if (OC.pls.includes(pl.id)) {
+    if (!await ask({title:'Treure-la del mòbil?', text:"S'esborraran del mòbil les cançons que no siguin a cap altra llista desada. Al PC no es toca res.", ok:'Treu-la', danger:true})) return;
+    OC.pls = OC.pls.filter(id => id !== pl.id);
+  } else { OC.pls.push(pl.id); toast("Es desarà al mòbil. Deixa l'app oberta mentre es guarda"); }
+  lsSet('cm-off', OC); softRender(); offSync();
+}
+function offBtn(pl) {   // a small icon next to the ⋯ of the playlist
+  if (!CAN_SAVE || OFFLINE) return '';
+  const ready = pl.songs.filter(id => S.songs[id]?.status === 'ready'), have = ready.filter(id => OFF.has(id)).length;
+  const on = plOnPhone(pl), saving = on && have < ready.length;
+  const label = !on ? 'Desa la llista al mòbil' : saving ? `Desant al mòbil ${have} de ${ready.length}` : 'Desada al mòbil';
+  return `<button class="rb offb${on ? ' on' : ''}" data-act="ploff" aria-label="${label}" title="${label}">${I(on && !saving ? 'check' : 'download')}${saving ? `<span class="left">${have}/${ready.length}</span>` : ''}</button>`;
+}
+// without a connection: the state comes from the phone
+function offState() {
+  const songs = {};
+  for (const id of OFF) songs[id] = {title:'Cançó', channel:'', duration:0, ...OLIB.songs[id], id, status:'ready', progress:100, error:null};
+  const playlists = OLIB.playlists.map(p => ({...p, songs:p.songs.filter(id => OFF.has(id))})).filter(p => p.songs.length);
+  LQS.queue = LQS.queue.filter(q => OFF.has(q.song_id));
+  if (!LQS.queue.some(q => q.qid === LQS.current)) LQS.current = LQS.queue[0]?.qid ?? null;
+  return {songs, playlists, queue:LQS.queue.map(q => ({...q, status:'ready'})), current:LQS.current, jam_url:'', online:false, owner:true};
+}
+function offPoll() {
+  const st = offState(), sig = JSON.stringify(st);
+  if (sig !== lastSig) { lastSig = sig; S = st; RS = {}; syncPlayer(); if (!dragging && !seeking && !swipeOpen) render(); }
+  offProbe();
+}
+let probeAt = 0, reconnecting = false, offTouched = false;   // offTouched: the queue was used without a connection
+async function offProbe(now) {   // is the PC reachable again?
+  if (reconnecting || (!now && performance.now() - probeAt < 5000)) return; probeAt = performance.now();
+  try { const r = await fetchT('/api/me', 5000); if (r.status >= 500 || !(await r.json()).owner) return; } catch { return; }
+  reconnect();
+}
+// Back online without reloading: what is playing goes on, at the same point, and the server takes over the phone's queue.
+async function reconnect() {
+  if (!OFFLINE || reconnecting) return; reconnecting = true;
+  try {
+    if ((offTouched || audio.currentTime > 0) && LQS.queue.length) {
+      for (let tries = 0; tries < 3; tries++) {   // a song may end while the queue is being sent: send it again
+        const cur = LQS.current, ci = LQS.queue.findIndex(q => q.qid === cur);
+        const r = await fetch('/api/queue/set', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({song_ids:LQS.queue.map(q => q.song_id), current:ci})});
+        if (!r.ok) return;   // still offline: try again later
+        const j = await r.json();
+        if (LQS.current !== cur) continue;
+        if (ci >= 0 && j.qids[ci] != null && loaded === cur) loaded = j.qids[ci];   // the same song, so the player is not restarted
+        break;
+      }
+    }
+    OFFLINE = false; offTouched = false; netFails = 0; LQS = {queue:[], current:null, seq:1}; lsSet('cm-offq', LQS);
+    $('#offBar').hidden = true; $('#qrBtn').hidden = $('#outBtn').hidden = false;
+    viewKey = ''; lastSig = ''; toast('Connexió recuperada'); await poll();
+  } catch {} finally { reconnecting = false; }
+}
+function netDown() { if (!GUEST && ++netFails >= 2 && OFF.size && !document.body.dataset.login) enterOffline(); }
+addEventListener('online', () => { if (OFFLINE) offProbe(true); });
+addEventListener('offline', () => { if (!GUEST && !OFFLINE && OFF.size && !document.body.dataset.login) enterOffline(); });
+function enterOffline() {
+  if (OFFLINE) return; OFFLINE = true; netFails = 0; OD.busy = false;
+  if (S.owner) {   // the queue that was playing carries on, with the songs that are on the phone
+    const q = S.queue.filter(x => OFF.has(x.song_id)).map(({qid, song_id}) => ({qid, song_id}));
+    LQS = {queue:q, current:S.current, seq:Math.max(0, ...S.queue.map(x => x.qid)) + 1}; lsSet('cm-offq', LQS);
+  }
+  $('#offBar').hidden = false; $('#qrBtn').hidden = $('#outBtn').hidden = true;
+  if (tab === 'search') tab = 'lists';
+  viewKey = ''; lastSig = ''; probeAt = performance.now(); offPoll();
+}
+// the server's queue rules (server.py: add_to_queue, advance, ...), on the phone
+function localApi(path, method, b = {}) {
+  const Q = LQS.queue, at = qid => Q.findIndex(q => q.qid === qid), cur = LQS.current, nq = sid => ({qid:LQS.seq++, song_id:sid});
+  const advance = from => {
+    if (cur == null || (from != null && from !== cur)) return;
+    const i = at(cur); Q.splice(i, 1); LQS.current = Q[i]?.qid ?? Q[0]?.qid ?? null;
+  };
+  switch (path) {
+    case '/api/queue/next': advance(b.from); break;
+    case '/api/queue/play': { if (cur != null && cur !== b.qid && at(cur) >= 0) Q.splice(at(cur), 1);
+      const i = at(b.qid); if (i < 0) break; Q.unshift(...Q.splice(i, 1)); LQS.current = b.qid; break; }
+    case '/api/queue/add': { const q = nq(b.song_id), ci = at(cur);
+      if (b.mode === 'end') Q.push(q);
+      else if (b.mode === 'now') { Q.splice(Math.max(ci, 0), 0, q); LQS.current = q.qid; }
+      else Q.splice(ci + 1, 0, q);
+      break; }
+    case '/api/queue/remove': if (b.qid === cur) advance(b.qid); else if (at(b.qid) >= 0) Q.splice(at(b.qid), 1); break;
+    case '/api/queue/clear': Q.length = 0; LQS.current = null; break;
+    case '/api/queue/load': { const pl = OLIB.playlists.find(p => p.id === b.playlist_id); if (!pl) break;
+      if ((b.mode || 'replace') === 'replace') { Q.length = 0; LQS.current = null; }
+      for (const sid of pl.songs) if (OFF.has(sid)) Q.push(nq(sid)); break; }
+    case '/api/queue/order': { const m = new Map(Q.map(q => [q.qid, q])); if (b.ids.every(id => m.has(id))) LQS.queue = b.ids.map(id => m.get(id)); break; }
+    default: toast('Sense connexió: ara no es pot fer'); throw new Error('offline');
+  }
+  if (LQS.current == null && LQS.queue.length) LQS.current = LQS.queue[0].qid;
+  offTouched = true; lsSet('cm-offq', LQS);
+  return {ok:true};
+}
 
 // ---------- sheets ----------
 let sheetDone = null;
@@ -334,23 +639,58 @@ async function pickPlaylist(title = 'Afegeix a una llista') {
 
 // ---------- views ----------
 const hasCurrent = () => S.current != null;
-const thumbOf = id => `/media/${id}.jpg`;
-const thumbImg = (id, cls = 'th') => `<img class="${cls}" src="${thumbOf(id)}" alt="" loading="lazy" onerror="this.onerror=null;this.src='https://i.ytimg.com/vi/${id}/mqdefault.jpg'">`;
+const thumbOf = id => `/media/${id}.jpg${JQ}`;
+const thumbImg = (id, cls = 'th') => `<img class="${cls}" src="${thumbOf(id)}" alt="" loading="lazy" onerror="this.onerror=null;this.dataset.fb=this.getAttribute('src');this.src='https://i.ytimg.com/vi/${id}/mqdefault.jpg'">`;
+function reasonOf(err) {   // yt-dlp's last line, in plain words
+  const e = String(err || '');
+  if (/private video/i.test(e)) return 'El vídeo és privat';
+  if (/confirm your age/i.test(e)) return "Té restricció d'edat";
+  if (/members[- ]only/i.test(e)) return 'Només per a membres del canal';
+  if (/copyright|has been removed|terminated|unavailable|not available/i.test(e)) return 'El vídeo ja no està disponible';
+  if (/not a bot|Sign in|cookies/i.test(e)) return 'YouTube ha frenat les baixades una estona';
+  if (/HTTP Error 403/i.test(e)) return 'YouTube ha bloquejat la baixada (cal actualitzar yt-dlp)';
+  if (/Interromput/.test(e)) return "S'ha interromput";
+  if (/urlopen|timed out|resolve|getaddrinfo|nodename|Connection|network|Temporary failure/i.test(e)) return 'Problema de connexió';
+  return e ? e.replace(/^ERROR:\s*/, '').slice(0, 90) : '';
+}
 function statusBits(s) {
   if (!s) return {sub:'', bar:''};
-  if (s.status === 'downloading') return {sub:`<span>Descarregant ${Math.round(s.progress)}%</span>`, bar:`<div class="bar"><i style="width:${s.progress}%"></i></div>`};
-  if (s.status === 'error') return {sub:`<span class="er">No s'ha pogut descarregar</span>`, bar:''};
-  return {sub:`<span class="ok">${I('check')}Descarregada</span>`, bar:''};
+  const up = String(s.id).startsWith('up_');   // a file the user uploaded: nothing is downloaded
+  if (s.status === 'downloading') return {sub: up ? '<span>Pujant…</span>' : `<span>Descarregant ${Math.round(s.progress)}%</span>`, bar:`<div class="bar"><i style="width:${s.progress}%"></i></div>`};
+  if (s.status === 'error' && up) return {sub:`<span class="er">${esc(reasonOf(s.error) || "No s'ha pogut llegir el fitxer")}</span>`, bar:''};
+  if (s.status === 'error') return {sub: s.auto ? `<span class="wt">${S.online === false ? 'Sense connexió · es baixarà quan torni' : 'Ha fallat · es tornarà a provar sola'}</span>`
+    : `<span class="er">No s'ha pogut descarregar${reasonOf(s.error) ? ' · ' + esc(reasonOf(s.error)) : ''}</span>`, bar:''};
+  return {sub: OFF.has(s.id) ? `<span class="ok">${I('phone')}Al mòbil</span>` : `<span class="ok">${I('check')}${up ? 'Pujada' : 'Descarregada'}</span>`, bar:''};
 }
 function empty(icon, title, text) { return `<div class="empty">${I(icon)}<b>${title}</b>${text}</div>`; }
-function searchBox(ctx, q, ph, go = true) {
-  return `<form class="searchbar" data-ctx="${ctx}">${go ? '' : I('search')}<input type="search" data-keep="q-${ctx}" placeholder="${ph}" value="${esc(q)}" enterkeyhint="search" autocomplete="off" autocapitalize="off" spellcheck="false">
-    <button type="button" class="x" data-act="sclear" data-ctx="${ctx}" aria-label="Esborra" ${q ? '' : 'hidden'}>${I('x')}</button>${go ? `<button type="submit" class="go" aria-label="Cerca">${I('search')}</button>` : ''}</form>`;
+function failNote(ids) {   // failed downloads in this view: try them again or forget them
+  ids = [...new Set(ids)].filter(id => S.songs[id]?.status === 'error' && !id.startsWith('up_')); if (GUEST || !ids.length) return '';   // an upload that failed: nothing to download again
+  const n = ids.length, auto = ids.some(id => S.songs[id].auto);
+  return `<div class="note fail"><b>${n === 1 ? "1 cançó no s'ha pogut descarregar" : `${n} cançons no s'han pogut descarregar`}</b>
+    ${auto ? `<span>${S.online === false ? 'Ara no hi ha connexió. Es baixaran soles quan torni.' : 'Es tornaran a provar soles.'}</span>` : ''}
+    <div class="btnrow"><button class="btn" data-act="failretry" data-ids="${ids.join(',')}">${I('retry')}Torna-ho a provar</button><button class="btn dng" data-act="faildrop" data-ids="${ids.join(',')}">${I('trash')}Descarta</button></div></div>`;
 }
+const AI_PH = 'Descriu què vols escoltar…';
+const AI_HINT = '<div class="hint">Descriu-la amb paraules o toca el micròfon per dictar-la. Ex.: «una cançó dels 80 en italià que fos un himne per als adolescents» o «una cançó de Txarango que parli de viatjar».</div>';
+// st: the search state, for boxes that can switch to AI search (with dictation)
+function searchBox(ctx, q, ph, go = true, st = null) {
+  const ai = !!st?.ai;
+  const field = ai ? `<textarea data-keep="q-${ctx}" rows="1" placeholder="${AI_PH}" enterkeyhint="search" autocapitalize="sentences" spellcheck="false">${esc(q)}</textarea>`
+    : `<input type="search" data-keep="q-${ctx}" placeholder="${ph}" value="${esc(q)}" enterkeyhint="search" autocomplete="off" autocapitalize="off" spellcheck="false">`;
+  return `<form class="searchbar ${ai ? 'ai' : ''}" data-ctx="${ctx}">${st && aiAllowed() ? `<button type="button" class="aib ${ai ? 'on' : ''}" data-act="aitoggle" data-ctx="${ctx}" aria-pressed="${ai}" aria-label="Cerca amb IA">${I('spark')}IA</button>` : go ? '' : I('search')}${field}
+    <button type="button" class="x" data-act="sclear" data-ctx="${ctx}" aria-label="Esborra" ${q ? '' : 'hidden'}>${I('x')}</button>${st ? `<button type="button" class="mic" data-act="mic" data-ctx="${ctx}" aria-label="Dicta amb la veu">${I('mic')}</button>` : ''}${go ? `<button type="submit" class="go" aria-label="Cerca">${I('search')}</button>` : ''}</form>`;
+}
+function fmtViews(n) {
+  if (n == null) return '';
+  const k = (x, d) => x.toFixed(d).replace('.', ',').replace(/,0$/, '');
+  return n < 1000 ? `${n} visualitzacions` : n < 1e6 ? `${k(n / 1e3, n < 1e4 ? 1 : 0)} mil visualitzacions` : `${k(n / 1e6, n < 1e7 ? 1 : 0)} M visualitzacions`;
+}
+const fmtDate = d => d ? new Date(d + 'T12:00:00').toLocaleDateString('ca', {day:'numeric', month:'short', year:'numeric'}) : '';
 function resultRows(st, ctx, pl) {
-  if (st.loading && !st.res.length) return '<div class="skel"></div><div class="skel"></div><div class="skel"></div><div class="skel"></div>';
+  const busy = st.loading ? `<div class="searching ${st.ai ? 'ai' : ''}" role="status"><span class="spin"></span><span class="dots">${st.ai ? 'La IA està buscant cançons' : `Cercant «${esc(st.q.trim().slice(0, 60))}»`}</span></div>` : '';
+  if (st.loading && !st.res.length) return busy + '<div class="skel"></div><div class="skel"></div><div class="skel"></div><div class="skel"></div>';
   if (st.err && !st.res.length) return `<div class="note" style="color:var(--danger)">${esc(st.err)}</div>`;
-  return `${st.loading ? `<div class="hint">Cercant «${esc(st.q.trim())}»…</div>` : ''}<div class="list">${st.res.map((r, i) => {
+  return `${busy}${st.note && !st.loading ? `<div class="note ainote">${I('spark')}<span>${esc(st.note)}</span></div>` : ''}<div class="list">${st.res.map((r, i) => {
     const s = statusOf(r.id); const sb = s ? statusBits(s) : null;
     const inList = ctx === 'pl' && pl && pl.songs.includes(r.id);
     const playingPv = pvR && pvR.id === r.id && !pv.paused;
@@ -360,15 +700,19 @@ function resultRows(st, ctx, pl) {
     else right = pvBtn + (GUEST ? `<button class="rb add" data-act="rmore" data-i="${i}" aria-label="Afegeix a la cua">${I('plus')}</button>`
       : `<button class="rb" data-act="rmore" data-i="${i}" aria-label="Opcions: reprodueix, cua, llista">${I('more')}</button>`);
     const act = ctx === 'pl' ? (inList ? '' : 'pladdres') : 'rmore';
-    return `<div class="row" ${act ? `data-act="${act}" data-i="${i}"` : ''}>
-      <img class="th" src="${esc(r.thumbnail)}" alt="" loading="lazy"><div class="mt"><div class="t">${esc(r.title)}</div><div class="s"><span>${esc(r.channel)}${r.duration ? ' · ' + fmt(r.duration) : ''}</span></div>${sb ? `<div class="s">${sb.sub}</div>` : ''}</div>${right}${sb ? sb.bar : ''}</div>`;
+    const meta = [fmtViews(r.views), fmtDate(r.date)].filter(Boolean).join(' · ');
+    return `<div class="row rrow" ${act ? `data-act="${act}" data-i="${i}"` : ''}>
+      <div class="thw"><img src="${esc(r.thumbnail)}" alt="" loading="lazy">${r.duration ? `<span class="dur">${fmt(r.duration)}</span>` : ''}</div>
+      <div class="mt">${r.ai ? `<div class="aitag">${I('spark')}${esc(r.ai)}</div>` : ''}<div class="t2">${esc(r.title)}</div>
+        <div class="s">${esc(r.uploader || r.channel || '')}</div>${meta ? `<div class="s">${meta}</div>` : ''}
+        ${r.why ? `<div class="why">${esc(r.why)}</div>` : ''}${sb ? `<div class="s">${sb.sub}</div>` : ''}</div>
+      <div class="racts">${right}</div>${sb ? sb.bar : ''}</div>`;
   }).join('')}</div>`;
 }
 
-const SEARCH_HINT = '<div class="hint">Cerca a YouTube i YouTube Music. Comença sola a partir de 5 lletres. Toca <b>🎧</b> per escoltar-ne una prèvia.</div>';
 function viewSearch() {
   const body = SQ.loading || SQ.err || SQ.res.length ? resultRows(SQ, 'main') : empty('search', 'Cerca música', GUEST ? 'Troba una cançó, escolta-la i afegeix-la a la cua.' : "Escriu el nom d'una cançó o d'un artista.<br>Només sona quan la descàrrega és al 100%.");
-  return {key:'search', pre:`<h1 class="title">${GUEST ? 'Jam session' : 'Cerca'}</h1>`, box: searchBox('main', SQ.q, 'Cançons, artistes o vídeos') + SEARCH_HINT, post: body};
+  return {key:'search' + (SQ.ai ? '-ai' : ''), pre:`<h1 class="title">${GUEST ? 'Jam session' : 'Cerca'}</h1>`, box: searchBox('main', SQ.q, 'Cançons, artistes o enllaç de YouTube', true, SQ) + (SQ.ai ? AI_HINT : ''), post: body};
 }
 
 function qRow(q, idx) {
@@ -386,15 +730,16 @@ function npCard() {   // what is playing, with remaining time and a seek bar, ri
   const s = songOfQ(S.current); if (!s || GUEST) return '';
   const d = audio.duration || s.duration || 0, c = audio.currentTime || 0, p = d ? c / d * 100 : 0;
   return `<div class="npcard"><div class="top">${thumbImg(s.id)}<div class="mt"><div class="t">${esc(s.title)}</div><div class="s">${esc(s.channel)}</div></div>
-    <button class="rb play" data-act="nptoggle" aria-label="Reprodueix / pausa">${I(audio.paused ? 'play' : 'pause')}</button><button class="rb" data-act="npnext" aria-label="Següent">${I('next')}</button></div>
+    <button class="rb" data-act="lyrics" aria-label="Lletra de la cançó">${I('lyrics')}</button><button class="rb play" data-act="nptoggle" aria-label="Reprodueix / pausa">${I(audio.paused ? 'play' : 'pause')}</button><button class="rb nextb${nextFxClass()}" data-act="npnext" aria-label="Següent"${nextFxStyle()}>${I('next')}</button></div>
     <input type="range" id="qSeek" min="0" max="1000" value="${Math.round(p * 10)}" style="--p:${p}%" aria-label="Posició de la cançó">
-    <div class="times"><span id="qCur">${fmt(c)}</span><span id="qRem">-${fmt(Math.max(0, d - c))}</span></div></div>`;
+    <div class="times"><span id="qCur">${fmt(c)}</span><button class="sleepchip${sleepOn() ? ' on' : ''}" data-act="sleep" aria-label="Temporitzador per aturar la música">${sleepChip()}</button><span id="qRem">-${fmt(Math.max(0, d - c))}</span></div></div>`;
 }
 const curIdx = () => S.queue.findIndex(q => q.qid === S.current);
 function viewQueue() {
   const n = S.queue.length;
   return {key:'queue', pre:`<h1 class="title">Cua</h1>${npCard()}
-    <div class="sec"><span>${n} ${n === 1 ? 'cançó' : 'cançons'}</span>${GUEST || !n ? '' : '<button class="link dng" data-act="qclear">Buida la cua</button>'}</div>
+    <div class="sec"><span>${n} ${n === 1 ? 'cançó' : 'cançons'}</span>${GUEST || !n ? '' : `<span>${n - curIdx() - 1 >= 2 ? `<button class="link" data-act="qshuffle" aria-label="Barreja les cançons que han de sonar">${I('shuffle', 'sm')}Aleatori</button>` : ''}<button class="link dng" data-act="qclear">Buida la cua</button></span>`}</div>
+    ${failNote(S.queue.map(q => q.song_id))}
     ${GUEST || !n ? '' : '<div class="hint">Llisca una cançó cap a l\'esquerra per reproduir-la o treure-la</div>'}
     ${n ? `<div class="list sortlist" data-kind="queue">${S.queue.map((q, i) => qRow(q, i)).join('')}</div>` : empty('queue', 'La cua és buida', 'Cerca una cançó o carrega una llista.')}`};
 }
@@ -409,10 +754,12 @@ function viewLists() {
   const orph = orphans(), many = S.playlists.length >= 2;
   const norm = x => x.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
   const shown = S.playlists.filter(p => !LQ.trim() || norm(p.name).includes(norm(LQ.trim())));
+  const phone = CAN_SAVE && !OFFLINE ? `<button class="pcard" data-act="offmenu"><div class="cover">${I('phone')}</div><div class="mt"><div class="t">Al mòbil</div>
+    <div class="s">${OD.busy ? `Desant ${OD.done}/${OD.total}…` : `${OFF.size} ${OFF.size === 1 ? 'cançó' : 'cançons'}${OD.usage ? ' · ' + fmtMB(OD.usage) : ''}${OC.all ? ' · totes' : ''}`}</div></div>${I('right')}</button>` : '';
   return {key:'lists' + (many ? '+f' : ''), pre:`<h1 class="title">Llistes</h1>
-    <button class="btn pri block" data-act="plnew" style="margin-bottom:12px">${I('plus')}Nova llista</button>`,
+    ${OFFLINE ? '<div class="note">Sense connexió: aquí tens les llistes i cançons desades al mòbil.</div>' : `<div class="btnrow tight" style="margin-bottom:12px"><button class="btn pri" data-act="plnew">${I('plus')}Nova llista</button>${aiAllowed() ? `<button class="btn aibtn" data-act="plai">${I('spark')}Llista amb IA</button>` : ''}<button class="btn spbtn" data-act="plspot" aria-label="Importa de Spotify">${I('spotify')}Spotify</button></div>`}${phone}`,
     box: many ? searchBox('lf', LQ, 'Cerca una llista', false) : '',
-    post:`<div class="list">${shown.map(p => { const c = firstReady(p); return `<button class="pcard" data-act="plopen" data-id="${p.id}"><div class="cover">${c ? thumbImg(c, '') : I('music')}</div><div class="mt"><div class="t">${esc(p.name)}</div><div class="s">${p.songs.length} ${p.songs.length === 1 ? 'cançó' : 'cançons'}</div></div>${I('right')}</button>`; }).join('')}
+    post:`<div class="list">${shown.map(p => { const c = firstReady(p); return `<button class="pcard" data-act="plopen" data-id="${p.id}"><div class="cover">${c ? thumbImg(c, '') : I('music')}</div><div class="mt"><div class="t">${esc(p.name)}</div><div class="s">${p.songs.length} ${p.songs.length === 1 ? 'cançó' : 'cançons'}${importTxt(p)}</div></div>${I('right')}</button>`; }).join('')}
     ${LQ.trim() && !shown.length ? '<div class="empty" style="padding:20px">Cap llista coincideix</div>' : ''}
     ${orph.length && !LQ.trim() ? `<button class="pcard" data-act="plorph"><div class="cover">${I('folder')}</div><div class="mt"><div class="t">Sense llista</div><div class="s">${orph.length} ${orph.length === 1 ? 'cançó descarregada' : 'cançons descarregades'}</div></div>${I('right')}</button>` : ''}</div>
     ${S.playlists.length || orph.length ? '' : empty('lists', 'Cap llista encara', 'Crea la primera i afegeix-hi cançons cercant-les.')}`};
@@ -424,40 +771,92 @@ function viewPlaylist(pl) {
     const s = S.songs[id] || {}; const sb = statusBits(s); const isReady = s.status === 'ready';
     const acts = `${isReady ? `<button class="sp" data-act="pswplay" data-id="${id}">${I('play')}Reprodueix</button>` : ''}<button class="sr" data-act="pswrm" data-id="${id}">${I('trash')}Treu</button>`;
     return `<div class="row swipe ${isReady ? '' : 'dim'}" data-sid="${id}"><div class="sacts">${acts}</div><div class="rin">${thumbImg(id)}<div class="mt"><div class="t">${esc(s.title)}</div>
-      <div class="s"><span>${esc(s.channel)} · ${fmt(s.duration)}</span>${isReady ? '' : sb.sub}</div></div>
+      <div class="s">${OFF.has(id) && !OFFLINE ? `<span class="ok" title="Al mòbil">${I('phone')}</span>` : ''}<span>${esc(s.channel)} · ${fmt(s.duration)}</span>${isReady ? '' : sb.sub}</div></div>
       <button class="rb" data-act="pmore" data-id="${id}" aria-label="Més opcions">${I('more')}</button>
       <button class="rb grip" aria-label="Arrossega per canviar l'ordre">${I('grip')}</button>${isReady ? '' : sb.bar}</div></div>`;
   }).join('');
   const searching = PQ.loading || PQ.err || PQ.res.length; const c = firstReady(pl);
-  return {key:'pl' + pl.id, pre:`<button class="back" data-act="plback">${I('left')}Llistes</button>
+  return {key:'pl' + pl.id + (PQ.ai ? '-ai' : '') + (OFFLINE ? '-off' : ''), pre:`<button class="back" data-act="plback">${I('left')}Llistes</button>
     <div class="phead"><div class="cover big">${c ? thumbImg(c, '') : I('music')}</div>
-      <div class="mt"><h1>${esc(pl.name)}</h1><div class="s">${pl.songs.length} ${pl.songs.length === 1 ? 'cançó' : 'cançons'}${total ? ' · ' + fmtLong(total) : ''}</div></div>
-      <button class="rb" data-act="plmenu" aria-label="Opcions de la llista">${I('more')}</button></div>
+      <div class="mt"><h1>${esc(pl.name)}</h1><div class="s">${pl.songs.length} ${pl.songs.length === 1 ? 'cançó' : 'cançons'}${total ? ' · ' + fmtLong(total) : ''}${importTxt(pl)}</div></div>
+      ${offBtn(pl)}${OFFLINE ? '' : `<button class="rb" data-act="plmenu" aria-label="Opcions de la llista">${I('more')}</button>`}</div>
     <div class="btnrow"><button class="btn pri" data-act="plplay" ${ready ? '' : 'disabled'}>${I('play')}Reprodueix</button><button class="btn" data-act="pladdq" ${pl.songs.length ? '' : 'disabled'}>${I('queue')}A la cua</button></div>
-    <div class="sec"><span>Afegeix cançons</span></div>`,
-    box: searchBox('pl', PQ.q, 'Cerca una cançó per afegir-la a la llista'),
+    ${OFFLINE ? '' : '<div class="sec"><span>Afegeix cançons</span></div>'}`,
+    box: OFFLINE ? '' : searchBox('pl', PQ.q, 'Cerca una cançó o enganxa un enllaç', true, PQ) + (PQ.ai ? AI_HINT : ''),
     post:`${searching ? `<div class="sec"><span>Resultats</span><button class="link" data-act="sclear" data-ctx="pl">Tanca</button></div>${resultRows(PQ, 'pl', pl)}` : ''}
-    <div class="sec"><span>Cançons de la llista</span></div>
+    <div class="sec"><span>Cançons de la llista</span></div>${failNote(pl.songs)}
     ${pl.songs.length ? `<div class="list sortlist" data-kind="pl" data-pid="${pl.id}">${rows}</div>` : empty('music', 'Llista buida', 'Cerca una cançó a dalt i quedarà al final de la llista.')}`};
 }
+let OSEL = null;   // "Sense llista": the songs ticked to be deleted at once (null: not selecting)
 function viewOrphans() {
   const orph = orphans();
+  if (OSEL) for (const id of [...OSEL]) if (!orph.some(s => s.id === id)) OSEL.delete(id);   // gone meanwhile
+  const n = OSEL?.size || 0, all = orph.length && n === orph.length;
+  const bar = !orph.length || OFFLINE ? '' : !OSEL
+    ? `<div class="sec"><span>${orph.length} ${orph.length === 1 ? 'cançó' : 'cançons'}</span><button class="link" data-act="oselect">${I('check', 'sm')}Selecciona</button></div>`
+    : `<div class="oselbar"><div class="sec" style="margin-top:0"><span>${n} de ${orph.length} ${n === 1 ? 'seleccionada' : 'seleccionades'}</span><span><button class="link" data-act="oall">${all ? 'Desmarca-les' : 'Totes'}</button> <button class="link" data-act="oselect">Cancel·la</button></span></div>
+      <div class="btnrow" style="margin:0"><button class="btn dng" data-act="odel" ${n ? '' : 'disabled'}>${I('trash')}${n ? `Esborra ${n} ${n === 1 ? 'cançó' : 'cançons'}` : 'Tria les cançons a esborrar'}</button></div></div>`;
+  const row = s => { const sb = statusBits(s), on = OSEL?.has(s.id);
+    return OSEL ? `<div class="row osel${on ? ' on' : ''}" data-act="otick" data-id="${s.id}" role="checkbox" aria-checked="${!!on}"><span class="tick">${on ? I('check') : ''}</span>${thumbImg(s.id)}<div class="mt"><div class="t">${esc(s.title)}</div><div class="s"><span>${esc(s.channel)} · ${fmt(s.duration)}</span></div></div></div>`
+      : `<div class="row">${thumbImg(s.id)}<div class="mt"><div class="t">${esc(s.title)}</div><div class="s"><span>${esc(s.channel)} · ${fmt(s.duration)}</span>${s.status === 'ready' ? '' : sb.sub}</div></div>
+      <button class="rb" data-act="omore" data-id="${s.id}" aria-label="Més opcions">${I('more')}</button>${s.status === 'ready' ? '' : sb.bar}</div>`; };
   return {key:'orph', pre:`<button class="back" data-act="plback">${I('left')}Llistes</button><h1 class="title">Sense llista</h1>
-    <div class="note">Cançons descarregades que no són a cap llista. Afegeix-les a una llista o esborra-les per alliberar espai.</div>
-    ${orph.length ? `<div class="list">${orph.map(s => { const sb = statusBits(s); return `<div class="row">${thumbImg(s.id)}<div class="mt"><div class="t">${esc(s.title)}</div><div class="s"><span>${esc(s.channel)} · ${fmt(s.duration)}</span>${s.status === 'ready' ? '' : sb.sub}</div></div>
-      <button class="rb" data-act="omore" data-id="${s.id}" aria-label="Més opcions">${I('more')}</button>${s.status === 'ready' ? '' : sb.bar}</div>`; }).join('')}</div>` : empty('check', 'Tot en ordre', 'Totes les cançons són a alguna llista.')}`};
+    <div class="note">Cançons descarregades que no són a cap llista. Afegeix-les a una llista o esborra-les per alliberar espai.</div>${bar}`,
+    post: orph.length ? `<div class="list">${orph.map(row).join('')}</div>` : empty('check', 'Tot en ordre', 'Totes les cançons són a alguna llista.')};
+}
+// ---------- upload audio files from the phone into a playlist ----------
+function uploadFiles(pid) {
+  const inp = document.createElement('input');
+  inp.type = 'file'; inp.multiple = true; inp.accept = 'audio/*,.mp3,.m4a,.aac,.wav,.flac,.ogg,.opus';
+  inp.onchange = async () => {
+    const files = [...inp.files]; let ok = 0;
+    for (const [i, f] of files.entries()) {
+      toast(files.length > 1 ? `Pujant ${i + 1}/${files.length}: ${f.name.slice(0, 40)}…` : `Pujant ${f.name.slice(0, 40)}…`);
+      try {
+        const r = await fetch('/api/upload' + (pid ? '?pid=' + pid : ''), {method:'POST', body:f,
+          headers:{'Content-Type': /^(audio|video)\//.test(f.type) ? f.type : 'application/octet-stream', 'X-File-Name': encodeURIComponent(f.name)}});
+        const j = await r.json().catch(() => ({}));
+        if (r.ok) ok++; else { toast(`${f.name.slice(0, 30)}: ${j.error || "no s'ha pogut pujar"}`); await new Promise(res => setTimeout(res, 2200)); }
+      } catch { toast("No s'ha pogut pujar (sense connexió?)"); }
+      lastSig = ''; await poll();
+    }
+    if (ok) toast(ok === 1 ? 'Pujada! Es prepara en uns segons' : `${ok} cançons pujades. Es preparen en uns segons`);
+  };
+  inp.click();
 }
 
 function renderNav() {
   const qn = S.queue.length;
-  $('#nav').innerHTML = TABS.map(([k, label, icon]) => `<button data-tab="${k}" class="${tab === k ? 'on' : ''}" aria-label="${label}">${I(icon)}${k === 'queue' && qn ? `<span class="badge">${qn}</span>` : ''}<span>${label}</span></button>`).join('');
+  $('#nav').innerHTML = TABS.filter(t => !OFFLINE || t[0] !== 'search').map(([k, label, icon]) => `<button data-tab="${k}" class="${tab === k ? 'on' : ''}" aria-label="${label}">${I(icon)}${k === 'queue' && qn ? `<span class="badge">${qn}</span>` : ''}<span>${label}</span></button>`).join('');
 }
 // The search box is only rebuilt when the view changes, so typing (and the phone keyboard) is never interrupted.
+// Makes `el` show `html` changing only what differs: the rows and images that stay are left alone, so a redraw
+// (a song saved to the phone, a download that moves on) does not reload every cover and make the screen blink.
+function morph(el, html) {
+  const t = document.createElement('template'); t.innerHTML = html; morphKids(el, t.content);
+}
+function morphKids(a, b) {
+  const an = [...a.childNodes], bn = [...b.childNodes];
+  bn.forEach((y, i) => {
+    const x = an[i];
+    if (!x) return a.appendChild(y);
+    if (x.nodeType !== y.nodeType || x.nodeName !== y.nodeName) return a.replaceChild(y, x);
+    if (x.nodeType !== 1) { if (x.nodeValue !== y.nodeValue) x.nodeValue = y.nodeValue; return; }
+    if (x.isEqualNode(y)) return;
+    // an image whose cover failed shows its YouTube fallback: that is not a change
+    const keep = x.nodeName === 'IMG' && x.dataset.fb && x.dataset.fb === y.getAttribute('src') ? ['src', 'onerror', 'data-fb'] : [];
+    for (const {name} of [...x.attributes]) if (!keep.includes(name) && !y.hasAttribute(name)) x.removeAttribute(name);
+    for (const {name, value} of [...y.attributes]) if (!keep.includes(name) && x.getAttribute(name) !== value) x.setAttribute(name, value);
+    morphKids(x, y);
+  });
+  for (let i = an.length - 1; i >= bn.length; i--) an[i].remove();
+}
 function render() {
   if (document.body.dataset.login) return;
-  const v = tab === 'search' ? viewSearch() : tab === 'queue' ? viewQueue() : viewLists();
+  const v = tab === 'admin' ? viewAdmin() : tab === 'search' ? viewSearch() : tab === 'queue' ? viewQueue() : viewLists();
   if (v.key !== viewKey) { viewKey = v.key; $('#main').innerHTML = `<div id="vpre"></div><div id="vbox">${v.box || ''}</div><div id="vpost"></div>`; }
-  $('#vpre').innerHTML = v.pre || ''; $('#vpost').innerHTML = v.post || '';
+  morph($('#vpre'), v.pre || ''); morph($('#vpost'), v.post || '');
+  for (const [ctx, st] of [['main', SQ], ['pl', PQ]]) document.querySelector(`.searchbar[data-ctx="${ctx}"]`)?.classList.toggle('busy', !!st.loading);
   renderNav(); renderPlayer();
 }
 
@@ -465,17 +864,154 @@ function render() {
 async function runSearch(ctx, q) {
   const st = ctx === 'pl' ? PQ : SQ;
   if (!q) { st.res = []; st.err = ''; st.last = ''; return render(); }
-  if (q === st.last && st.res.length && !st.err) return;
+  const key = (st.ai ? 'ai:' : '') + q;
+  if (key === st.last && st.res.length && !st.err) return;
   const my = st.seq = (st.seq || 0) + 1; st.loading = true; st.err = ''; render();
-  let res = st.res, err = '';
-  try { res = await api('/api/search?q=' + encodeURIComponent(q)); if (!res.length) err = 'Cap resultat'; } catch (e) { err = e.message || 'Error de cerca'; }
+  let res = st.res, err = '', note = '';
+  try {
+    if (st.ai) { const r = await api('/api/ai', 'POST', {q}); res = r.results; note = r.note || ''; }
+    else res = await api('/api/search?q=' + encodeURIComponent(q));
+    if (!res.length) err = 'Cap resultat';
+  } catch (e) { err = e.message || 'Error de cerca'; }
   if (my !== st.seq) return;   // a newer search already started
-  st.loading = false; st.res = err ? [] : res; st.err = err; st.last = q; lastSig = ''; render(); poll();
+  st.loading = false; st.res = err ? [] : res; st.err = err; st.note = err ? '' : note; st.last = key; lastSig = ''; render(); poll();
+  fillDates(st, my);
+}
+async function fillDates(st, my) {   // upload dates (and missing views/uploader) come after the results: YouTube's search does not give them
+  const ids = st.res.filter(r => !r.date).map(r => r.id); if (!ids.length) return;
+  let d = {}; try { d = await (await fetch('/api/meta?ids=' + ids.join(','), {cache:'no-store'})).json(); } catch { return; }
+  if (my !== st.seq) return;
+  st.res.forEach(r => { const m = d[r.id]; if (!m) return; r.date = m.date || r.date; r.views ??= m.views; r.duration ||= m.duration; if (!r.uploader || r.uploader === 'YouTube Music') r.uploader = m.uploader || r.uploader; });
+  lastSig = ''; if (!dragging && !swipeOpen) render();
+}
+// ---------- dictation (voice notes) for the search boxes ----------
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition; let rec = null;
+// field(): the text box being dictated into; onDone(text) runs when the user stops talking.
+function listen(btn, field, onDone) {
+  if (rec) { rec.stop(); return; }
+  if (!SR || !window.isSecureContext) return toast(window.isSecureContext ? 'Aquest navegador no permet dictar: fes servir el micròfon del teclat'
+    : "Per dictar cal obrir l'app amb https. Mentrestant, fes servir el micròfon del teclat");
+  const before = field()?.value.trim() || '', base = before ? before + ' ' : '';   // a dictation adds to what is already written
+  let said = '';
+  rec = new SR(); rec.lang = 'ca-ES'; rec.interimResults = true; rec.continuous = false;
+  rec.onresult = e => {
+    said = [...e.results].map(r => r[0].transcript).join('');
+    const f = field(); if (f) { f.value = base + said; f.dispatchEvent(new Event('input', {bubbles:true})); }
+  };
+  rec.onerror = e => { if (/not-allowed/.test(e.error)) toast('Cal donar permís al micròfon'); else if (!/no-speech|aborted/.test(e.error)) toast("No s'ha pogut dictar"); };
+  rec.onend = () => {
+    rec = null; document.querySelectorAll('.mic.rec').forEach(b => b.classList.remove('rec'));
+    if (said.trim()) onDone((base + said).trim());
+  };
+  try { rec.start(); btn.classList.add('rec'); } catch { rec = null; }
+}
+function dictate(ctx, btn) {
+  const st = ctx === 'pl' ? PQ : SQ, field = () => document.querySelector(`[data-keep="q-${ctx}"]`);
+  if (!rec && !st.ai && field()) field().value = '';   // a normal search: the dictation replaces the text
+  listen(btn, field, text => { clearTimeout(searchTimers[ctx]); runSearch(ctx, text); });
+}
+// ---------- playlist made by AI: describe it (typed or dictated) and Claude picks the name and songs ----------
+function aiPlaylistSheet() {
+  sheetDone = () => {};
+  openSheet(`<h3>${I('spark')} Llista amb IA</h3><p>Descriu la llista que vols, escrivint o amb el micròfon. Si li poses nom, el farà servir; si no, en proposarà un.</p>
+    <div class="searchbar ai" style="margin-bottom:8px"><textarea id="aiplq" rows="3" maxlength="1500" placeholder="Ex.: una llista d'uns 30 minuts amb el millor pop rock català dels 90"></textarea>
+      <button type="button" class="mic" id="aiplmic" aria-label="Dicta amb la veu">${I('mic')}</button></div>
+    <div id="aiplst"></div>
+    <div class="btnrow"><button class="btn" data-v="">Tanca</button><button class="btn aibtn" id="aiplgo">${I('spark')}Crea la llista</button></div>`);
+  const q = $('#aiplq');
+  const go = async () => {
+    const text = q.value.trim(); if (!text) return q.focus();
+    if (rec) rec.abort();
+    $('#aiplgo').disabled = q.disabled = $('#aiplmic').disabled = true;
+    $('#aiplst').innerHTML = '<div class="searching ai" role="status"><span class="spin"></span><span class="dots">La IA està preparant la llista (pot trigar un minut)</span></div>';
+    let r = null; try { r = await api('/api/ai/playlist', 'POST', {q: text}); } catch {}
+    const open = $('#sheet').classList.contains('on') && $('#aiplgo');
+    if (!r) { if (open) { $('#aiplgo').disabled = q.disabled = $('#aiplmic').disabled = false; $('#aiplst').innerHTML = ''; } return; }
+    toast(`«${r.name}»: ${r.count} cançons${r.minutes ? ` · ${r.minutes} min` : ''}. Es van descarregant.`);
+    lastSig = ''; await poll();
+    if (open) { closeSheet(); tab = 'lists'; openPl = r.id; PQ.q = ''; PQ.res = []; PQ.err = ''; render(); scrollTo(0, 0); }   // still waiting here: show the new list
+  };
+  $('#aiplgo').onclick = go;
+  $('#aiplmic').onclick = () => listen($('#aiplmic'), () => q, go);
+  q.onkeydown = e => { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); go(); } };
+  setTimeout(() => q.focus(), 260);
+}
+// ---------- import from Spotify: paste the link of a public playlist or album; each song is looked up on YouTube ----------
+const importTxt = p => { const m = p.importing; if (!m) return '';
+  return m.done < m.total ? ` · important de Spotify ${m.done}/${m.total}…` : ` · importada${m.missing ? ` (${m.missing} no trobades)` : ''}`; };
+function spotifySheet() {
+  sheetDone = () => {};
+  openSheet(`<h3>${I('spotify')} Importa de Spotify</h3><p>Enganxa l'enllaç d'una llista, un àlbum, un artista o una cançó (a Spotify: <b>⋯ → Comparteix → Copia l'enllaç</b>).</p>
+    <div class="searchbar" style="margin-bottom:8px"><textarea id="spq" rows="2" autocomplete="off" placeholder="https://open.spotify.com/playlist/…"></textarea></div>
+    <div id="spst"></div>
+    <div class="btnrow"><button class="btn spbtn" id="spgo">${I('spotify')}Importa l'enllaç</button></div>
+    <div class="sec"><span>Llista privada?</span></div>
+    ${aiAllowed() ? `<p>Fes captures de la llista, baixant fins a veure-les totes, i la IA en llegirà les cançons. Serveix per a qualsevol app de música.</p>
+    <div id="shst"></div>
+    <div class="btnrow"><button class="btn aibtn" id="shgo">${I('spark')}Tria les captures…</button></div>` : ''}
+    <p style="margin-top:10px">A l'ordinador també pots obrir-la al Spotify, prémer <b>Ctrl+A</b> i <b>Ctrl+C</b> i enganxar a dalt les cançons copiades.</p>
+    <div class="btnrow"><button class="btn" data-v="">Tanca</button></div>`);
+  if ($('#shgo')) $('#shgo').onclick = () => screenshotsImport();
+  const q = $('#spq');
+  const go = async () => {
+    const url = q.value.trim(); if (!url) return q.focus();
+    const fail = msg => { $('#spst').innerHTML = `<div class="note fail" role="alert">${esc(msg)}</div>`; };
+    if (!/spotify\.com\/|spotify:/i.test(url)) return fail("Això no és un enllaç de Spotify. A Spotify, obre la llista i toca ⋯ → Comparteix → Copia l'enllaç: ha de començar per https://open.spotify.com/playlist/…");
+    $('#spgo').disabled = q.disabled = true;
+    $('#spst').innerHTML = '<div class="searching" role="status"><span class="spin"></span><span class="dots">Llegint la llista de Spotify</span></div>';
+    let r = null, err = ''; try { r = await api('/api/import/spotify', 'POST', {url}); } catch (e) { err = e.message; }
+    const open = $('#sheet').classList.contains('on') && $('#spgo');
+    if (!r) { if (open) { $('#spgo').disabled = q.disabled = false; fail(err || "No s'ha pogut importar la llista"); } return; }
+    toast(`«${r.name}»: buscant ${r.count} cançons a YouTube. Es van afegint i descarregant.`);
+    lastSig = ''; await poll();
+    if (open) { closeSheet(); tab = 'lists'; openPl = r.id; PQ.q = ''; PQ.res = []; PQ.err = ''; render(); scrollTo(0, 0); }
+  };
+  $('#spgo').onclick = go;
+  q.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); go(); } };
+  setTimeout(() => q.focus(), 260);
+}
+// a screenshot, made smaller for the trip to Claude (the long side ~1568 px is what it reads best)
+function shrinkShot(file, max = 1568) {
+  return new Promise((res, rej) => {
+    const img = new Image();
+    img.onload = () => {
+      const k = Math.min(1, max / Math.max(img.width, img.height)), c = document.createElement('canvas');
+      c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(img.src);
+      res(c.toDataURL('image/jpeg', 0.85));
+    };
+    img.onerror = rej; img.src = URL.createObjectURL(file);
+  });
+}
+function screenshotsImport() {
+  const inp = document.createElement('input');
+  inp.type = 'file'; inp.accept = 'image/*'; inp.multiple = true;
+  inp.onchange = async () => {
+    const files = [...inp.files].sort((a, b) => a.lastModified - b.lastModified || a.name.localeCompare(b.name)).slice(0, 15);   // in the order they were taken
+    if (!files.length) return;
+    const st = $('#shst'), btns = [$('#shgo'), $('#spgo')];
+    const busy = on => btns.forEach(b => { if (b) b.disabled = on; });
+    const fail = msg => { if (st) st.innerHTML = `<div class="note fail" role="alert">${esc(msg)}</div>`; };
+    busy(true);
+    if (st) st.innerHTML = `<div class="searching ai" role="status"><span class="spin"></span><span class="dots">La IA està llegint ${files.length} ${files.length === 1 ? 'captura' : 'captures'} (pot trigar un minut)</span></div>`;
+    let images; try { images = await Promise.all(files.map(f => shrinkShot(f))); } catch { busy(false); return fail("Alguna captura no s'ha pogut obrir"); }
+    let r = null, err = ''; try { r = await api('/api/import/screens', 'POST', {images}); } catch (e) { err = e.message; }
+    const open = $('#sheet').classList.contains('on') && $('#shgo');
+    if (!r) { if (open) { busy(false); fail(err || "No s'ha pogut crear la llista"); } return; }
+    toast(`«${r.name}»: ${r.count} cançons llegides. Les busco a YouTube i es van descarregant.`);
+    lastSig = ''; await poll();
+    if (open) { closeSheet(); tab = 'lists'; openPl = r.id; PQ.q = ''; PQ.res = []; PQ.err = ''; render(); scrollTo(0, 0); }
+  };
+  inp.click();
 }
 const searchTimers = {};
+document.addEventListener('keydown', e => {   // AI box: Enter searches, Shift+Enter makes a new line
+  if (e.key !== 'Enter' || e.shiftKey || e.isComposing || e.target.tagName !== 'TEXTAREA' || !e.target.dataset.keep) return;
+  e.preventDefault(); e.target.closest('form')?.requestSubmit();
+});
 document.addEventListener('submit', e => {
   const f = e.target.closest('.searchbar'); if (!f) return; e.preventDefault();
-  const inp = f.querySelector('input'); inp.blur(); if (f.dataset.ctx === 'lf') return;
+  const inp = f.querySelector('input, textarea'); inp.blur(); if (f.dataset.ctx === 'lf') return;
   clearTimeout(searchTimers[f.dataset.ctx]); runSearch(f.dataset.ctx, inp.value.trim());
 });
 document.addEventListener('input', e => {
@@ -485,6 +1021,7 @@ document.addEventListener('input', e => {
   if (ctx === 'lf') { LQ = v; return render(); }
   const st = ctx === 'pl' ? PQ : SQ; st.q = v;
   clearTimeout(searchTimers[ctx]);
+  if (st.ai) { e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px'; return; }   // AI: only on purpose (it costs), never while typing
   if (v.trim().length >= 5) searchTimers[ctx] = setTimeout(() => runSearch(ctx, v.trim()), 650);   // automatic from the 5th character
 });
 
@@ -507,6 +1044,19 @@ async function removeFromList(pl, s) {
   if (!other && !await ask({title:'Treure la cançó?', text:"No és a cap altra llista: també s'esborrarà la descàrrega.", ok:'Treu i esborra', danger:true})) return;
   await act(`/api/playlists/${pl.id}/songs/${s.id}`, 'DELETE');
 }
+const forgetItem = {v:'forget', icon:'x', label:'No la vull escoltar més', sub:'La treu de la cua i de totes les llistes', danger:true};
+async function forgetSong(s) {
+  const n = S.playlists.filter(p => p.songs.includes(s.id)).length;
+  if (!await ask({title:'No la vols escoltar més?', text:`«${s.title}» sortirà de la cua${n ? ` i de ${n === 1 ? '1 llista' : n + ' llistes'}` : ''} i se n'esborrarà la descàrrega.`, ok:'Treu-la', danger:true})) return;
+  if (await act('/api/songs/' + s.id, 'DELETE')) toast('Treta de la cua i de les llistes');
+}
+const failItems = s => s.status !== 'error' ? [] : [{v:'retry', icon:'retry', label:'Torna-ho a provar ara', sub:reasonOf(s.error)},
+  {v:'drop', icon:'trash', label:'Descarta-la', sub:'La treu de la cua i de totes les llistes', danger:true}];
+async function failAction(v, ids) {
+  if (v === 'retry') { await act('/api/songs/retry', 'POST', {ids}); toast(ids.length === 1 ? 'Tornant-la a descarregar…' : 'Tornant-les a descarregar…'); }
+  else if (v === 'drop' && await ask({title: ids.length === 1 ? 'Descartar la cançó?' : `Descartar ${ids.length} cançons?`,
+    text:'Les cançons que no s\'han pogut descarregar es trauran de la cua i de totes les llistes.', ok:'Descarta', danger:true})) await act('/api/songs/discard', 'POST', {ids});
+}
 $('#main').addEventListener('click', async e => {
   if (performance.now() < swallowUntil) { e.preventDefault(); return; }   // the click that ends a swipe
   if (swipeOpen && !e.target.closest('.sacts')) { closeSwipe(); return; }
@@ -515,12 +1065,22 @@ $('#main').addEventListener('click', async e => {
   if (swipeOpen) closeSwipe();
   switch (d.act) {
     case 'sclear': {
-      const f = el.closest('.searchbar'), inp = f?.querySelector('input'); if (inp) { inp.value = ''; inp.focus(); } el.hidden = true;
+      const f = el.closest('.searchbar'), inp = f?.querySelector('input, textarea'); if (inp) { inp.value = ''; inp.style.height = ''; inp.focus(); } el.hidden = true;
       if (d.ctx === 'lf') { LQ = ''; render(); break; }
-      const st = d.ctx === 'pl' ? PQ : SQ; clearTimeout(searchTimers[d.ctx]); st.seq = (st.seq || 0) + 1; st.q = ''; st.res = []; st.err = ''; st.last = ''; st.loading = false; render(); break; }
+      const st = d.ctx === 'pl' ? PQ : SQ; clearTimeout(searchTimers[d.ctx]); st.seq = (st.seq || 0) + 1; st.q = ''; st.res = []; st.err = ''; st.note = ''; st.last = ''; st.loading = false; render(); break; }
+    case 'aitoggle': {
+      const st = d.ctx === 'pl' ? PQ : SQ; clearTimeout(searchTimers[d.ctx]); if (rec) rec.abort();
+      st.ai = !st.ai; st.seq = (st.seq || 0) + 1; st.res = []; st.err = ''; st.note = ''; st.last = ''; st.loading = false; render();
+      const f = document.querySelector(`[data-keep="q-${d.ctx}"]`); if (f) { f.focus(); f.dispatchEvent(new Event('input', {bubbles:true})); }
+      break; }
+    case 'mic': dictate(d.ctx, el); break;
+    case 'failretry': case 'faildrop': await failAction(d.act === 'failretry' ? 'retry' : 'drop', d.ids.split(',')); break;
     case 'rprev': previewResult((d.ctx === 'pl' ? PQ : SQ).res[+d.i]); break;
+    case 'lyrics': openLyrics(); break;
     case 'nptoggle': togglePlay(); break;
     case 'npnext': skip(); break;
+    case 'sleep': sleepMenu(); break;
+    case 'plspot': spotifySheet(); break;
     case 'swplay': await act('/api/queue/play', 'POST', {qid:+d.qid}); break;
     case 'swrm': await act('/api/queue/remove', 'POST', {qid:+d.qid}); break;
     case 'pswplay': await act('/api/queue/add', 'POST', {song_id:d.id, mode:'now'}); toast('Reproduint…'); break;
@@ -536,21 +1096,43 @@ $('#main').addEventListener('click', async e => {
     case 'pladdres': { const x = await act(`/api/playlists/${pl.id}/request`, 'POST', metaOf(PQ.res[+d.i])); if (x) listAddToast(x); break; }
     case 'qplay': if (!e.target.closest('.rb')) await act('/api/queue/play', 'POST', {qid:+d.qid}); break;
     case 'qmore': { const q = S.queue.find(x => x.qid === +d.qid); const s = S.songs[q.song_id];
-      const v = await menu({title:s.title, sub:s.channel, thumb:thumbOf(s.id), items:[...(s.status === 'ready' ? [{v:'play', icon:'play', label:'Reprodueix ara'}] : []), {v:'rm', icon:'trash', label:'Treu de la cua', danger:true}]});
-      if (v === 'play') await act('/api/queue/play', 'POST', {qid:q.qid}); else if (v === 'rm') await act('/api/queue/remove', 'POST', {qid:q.qid}); break; }
+      const v = await menu({title:s.title, sub:s.channel, thumb:thumbOf(s.id), items:[...(s.status === 'ready' ? [{v:'play', icon:'play', label:'Reprodueix ara'}] : []), ...failItems(s), {v:'rm', icon:'trash', label:'Treu de la cua', danger:true}, ...(OFFLINE ? [] : [forgetItem])]});
+      if (v === 'play') await act('/api/queue/play', 'POST', {qid:q.qid}); else if (v === 'rm') await act('/api/queue/remove', 'POST', {qid:q.qid}); else if (v === 'forget') await forgetSong(s); else await failAction(v, [s.id]); break; }
+    case 'qshuffle': {   // random order for everything after the song that is playing
+      const ids = S.queue.map(q => q.qid), k = curIdx() + 1, rest = ids.slice(k);
+      for (let i = rest.length - 1; i > 0; i--) { const j = Math.random() * (i + 1) | 0; [rest[i], rest[j]] = [rest[j], rest[i]]; }
+      if (await act('/api/queue/order', 'POST', {ids: ids.slice(0, k).concat(rest)})) toast('Cua barrejada');
+      break; }
     case 'qclear': if (await ask({title:'Buidar la cua?', text:'Es treuran totes les cançons de la cua. Les descàrregues es mantenen.', ok:'Buida', danger:true})) await act('/api/queue/clear', 'POST'); break;
+    case 'plai': aiPlaylistSheet(); break;
+    case 'offmenu': offMenu(); break;
+    case 'admback': tab = 'lists'; render(); break;
+    case 'admuser': adminUser(+d.id); break;
+    case 'ploff': togglePlOff(pl); break;
     case 'plnew': { const name = await input({title:'Nova llista', ph:'Nom de la llista', ok:'Crea'}); if (name) { const r = await act('/api/playlists', 'POST', {name}); if (r) { openPl = r.id; render(); } } break; }
     case 'plopen': openPl = +d.id; PQ.q = ''; PQ.res = []; PQ.err = ''; render(); scrollTo(0, 0); break;
     case 'plorph': openPl = 'orphans'; render(); scrollTo(0, 0); break;
-    case 'plback': openPl = null; render(); break;
-    case 'plmenu': { const v = await menu({title:pl.name, items:[{v:'ren', icon:'edit', label:'Canvia el nom'}, {v:'del', icon:'trash', label:'Esborra la llista', sub:'Les cançons descarregades es mantenen', danger:true}]});
-      if (v === 'ren') { const name = await input({title:'Canvia el nom', value:pl.name}); if (name) await act('/api/playlists/' + pl.id, 'PATCH', {name}); }
+    case 'plback': openPl = null; OSEL = null; render(); break;
+    case 'oselect': OSEL = OSEL ? null : new Set(); render(); break;
+    case 'otick': OSEL.has(d.id) ? OSEL.delete(d.id) : OSEL.add(d.id); render(); break;
+    case 'oall': { const orph = orphans(); OSEL = OSEL.size === orph.length ? new Set() : new Set(orph.map(s => s.id)); render(); break; }
+    case 'odel': { const ids = [...OSEL]; if (!ids.length) break;
+      if (!await ask({title:`Esborrar ${ids.length} ${ids.length === 1 ? 'cançó' : 'cançons'}?`, text:"S'esborraran els fitxers descarregats i desapareixeran també de la cua.", ok:'Esborra', danger:true})) break;
+      if (await act('/api/songs/delete', 'POST', {ids})) { OSEL = null; toast(ids.length === 1 ? 'Cançó esborrada' : `${ids.length} cançons esborrades`); render(); }
+      break; }
+    case 'plmenu': { const v = await menu({title:pl.name, items:[{v:'ren', icon:'edit', label:'Canvia el nom'},
+        {v:'up', icon:'upload', label:"Puja un fitxer d'àudio", sub:'Avançat: un MP3 (o M4A, WAV…) del teu dispositiu'},
+        {v:'del', icon:'trash', label:'Esborra la llista', sub:'Les cançons descarregades es mantenen', danger:true}]});
+      if (v === 'up') uploadFiles(pl.id);
+      else if (v === 'ren') { const name = await input({title:'Canvia el nom', value:pl.name}); if (name) await act('/api/playlists/' + pl.id, 'PATCH', {name}); }
       else if (v === 'del' && await ask({title:`Esborrar «${pl.name}»?`, text:'Les cançons descarregades es mantenen a «Sense llista».', ok:'Esborra', danger:true})) { await act('/api/playlists/' + pl.id, 'DELETE'); openPl = null; render(); } break; }
     case 'plplay': await act('/api/queue/load', 'POST', {playlist_id:pl.id, mode:'replace'}); toast(`Reproduint «${pl.name}»`); tab = 'queue'; render(); scrollTo(0, 0); break;
     case 'pladdq': await act('/api/queue/load', 'POST', {playlist_id:pl.id, mode:'append'}); toast('Llista afegida a la cua'); tab = 'queue'; render(); scrollTo(0, 0); break;
     case 'pmore': { const s = S.songs[d.id];
-      const v = await songMenu({title:s.title, sub:s.channel, thumb:thumbOf(s.id), ready:s.status === 'ready', extra:[{v:'rm', icon:'trash', label:'Treu de la llista', danger:true}]});
+      const v = await songMenu({title:s.title, sub:s.channel, thumb:thumbOf(s.id), ready:s.status === 'ready', extra:[...failItems(s), {v:'rm', icon:'trash', label:'Treu de la llista', danger:true}, ...(OFFLINE ? [] : [forgetItem])]});
       if (v === 'rm') await removeFromList(pl, s);
+      else if (v === 'forget') await forgetSong(s);
+      else if (v === 'retry' || v === 'drop') await failAction(v, [s.id]);
       else if (v) { await act('/api/queue/add', 'POST', {song_id:s.id, mode:v}); toast('Afegida a la cua'); } break; }
     case 'omore': { const s = S.songs[d.id];
       const v = await songMenu({title:s.title, sub:s.channel, thumb:thumbOf(s.id), ready:s.status === 'ready', extra:[{v:'list', icon:'lists', label:'Afegeix a una llista…'}, {v:'del', icon:'trash', label:'Esborra la descàrrega', danger:true}]});
@@ -621,7 +1203,7 @@ $('#main').addEventListener('pointerdown', e => {
 });
 
 // ---------- header ----------
-$('#qrBtn').innerHTML = I('qr'); $('#outBtn').innerHTML = I('out');
+$('#qrBtn').innerHTML = I('qr'); $('#outBtn').innerHTML = I('user');
 function showQR() {
   sheetDone = () => {};
   const g = S.guests || 0;
@@ -639,7 +1221,7 @@ function showQR() {
   };
 }
 $('#qrBtn').onclick = showQR;
-$('#outBtn').onclick = async () => { await fetch('/api/logout', {method:'POST', headers:{'Content-Type':'application/json'}, body:'{}'}); location.reload(); };
+$('#outBtn').onclick = () => ME && profileSheet();
 if (GUEST) {
   $('#qrBtn').hidden = true; $('#outBtn').hidden = true; $('#jamBar').hidden = false;
   document.documentElement.dataset.mode = 'jam'; document.querySelector('meta[name=theme-color]').content = '#0f0a1f'; document.title = 'coniMIX · Jam';
@@ -648,7 +1230,8 @@ if (GUEST) {
 // ---------- player (two elements, crossfade between songs) ----------
 const a1 = $('#audio'), a2 = $('#audio2'); let audio = a1;
 let loaded = null, wl = null, seeking = false, fadeState = null, fadeTimer = null, pendingAdvance = false, xfKey = null;
-const XFADE = 4;   // seconds of overlap between consecutive songs
+// seconds of overlap between consecutive songs: each user's own setting (profile), kept on the phone for offline; 0 = off
+const xfadeSecs = () => { const v = ME?.xfade ?? lsGet('cm-xfade', 4); return Math.max(0, Math.min(12, +v || 0)); };
 const VOL_OK = (() => { try { const a = new Audio(); a.volume = .5; return a.volume === .5; } catch { return false; } })();   // false on iOS: no fade, but gapless
 const SILENT = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';
 document.addEventListener('pointerdown', () => {   // unlock the idle element for later playback (mobile autoplay rules)
@@ -662,14 +1245,28 @@ function nextReadyQid() {   // same rule as the server: first fully downloaded i
 }
 function setMeta(qid) {
   const q = S.queue.find(x => x.qid === qid), s = q && S.songs[q.song_id];
-  if ('mediaSession' in navigator && s) navigator.mediaSession.metadata = new MediaMetadata({title:s.title, artist:s.channel || '', artwork:[{src:thumbOf(s.id)}]});
+  if (!('mediaSession' in navigator) || !s) return;   // lock screen, AirPods, CarPlay "Now Playing"
+  const art = new URL(thumbOf(s.id), location.href).href;
+  navigator.mediaSession.metadata = new MediaMetadata({title:s.title, artist:s.channel || '', album:document.title.split(' · ')[0],
+    artwork:['96x96', '256x256', '512x512'].map(sizes => ({src:art, sizes, type:'image/jpeg'}))});
+}
+let posSent = null;   // {pos, at, rate}: the last position given to the system, which moves the bar on by itself
+function setPos(force) {   // keeps the CarPlay / lock screen progress bar in step
+  if (!('mediaSession' in navigator) || !navigator.mediaSession.setPositionState || !audio.duration || !isFinite(audio.duration)) return;
+  const now = performance.now(), rate = audio.paused ? 0 : audio.playbackRate || 1;
+  // while it plays, the system counts on its own: sending the time again every second makes CarPlay's clock stumble,
+  // so only resend when it really drifted (a stall, a seek it did not hear about)
+  if (!force && posSent && posSent.rate === rate && Math.abs(posSent.pos + (now - posSent.at) / 1000 * rate - audio.currentTime) < 1.5) return;
+  posSent = {pos:audio.currentTime, at:now, rate};
+  try { navigator.mediaSession.setPositionState({duration:audio.duration, position:Math.min(audio.currentTime, audio.duration), playbackRate:audio.playbackRate || 1}); } catch {}
 }
 function finishFade() {
   clearInterval(fadeTimer); fadeTimer = null;
   if (fadeState) { const {old, nu} = fadeState; fadeState = null; old.pause(); old.removeAttribute('src'); old.volume = 1; nu.volume = 1; }
 }
 function startOn(el, qid) {
-  const q = S.queue.find(x => x.qid === qid); el.src = `/media/${q.song_id}.mp3`; setMeta(qid);
+  const q = S.queue.find(x => x.qid === qid); el.src = `/media/${q.song_id}.mp3${JQ}`; setMeta(qid);
+  if (SLEEP.hold) { SLEEP.hold = false; return Promise.resolve(); }   // stopped by the sleep timer: loaded, not playing
   return el.play().catch(() => toast('Toca ▶ per començar a reproduir'));
 }
 // Start `qid` on the idle element. dur>0: equal-power crossfade; natural: let the old one run out (iOS); otherwise cut the old one.
@@ -692,15 +1289,15 @@ function syncPlayer() {
   if (GUEST || pendingAdvance || S.current === loaded) return;
   const prev = loaded; loaded = S.current;
   if (loaded == null) { finishFade(); audio.pause(); audio.removeAttribute('src'); audio.load(); releaseAwake(); return; }
-  if (prev != null && !audio.paused && audio.getAttribute('src')) crossfadeTo(loaded, 1.2, false);   // manual jump: short fade
+  if (prev != null && !audio.paused && audio.getAttribute('src')) crossfadeTo(loaded, xfadeSecs() ? 1.2 : 0, false);   // manual jump: short fade
   else { finishFade(); audio.volume = 1; startOn(audio, loaded); }
 }
 function maybeCrossfade() {   // near the end of a song, start the next one underneath so there is no silence
-  if (fadeState || pendingAdvance || xfKey === loaded || !audio.duration || audio.paused) return;
-  const lead = VOL_OK ? Math.min(XFADE, audio.duration / 3) : 0.4;
+  if (fadeState || pendingAdvance || xfKey === loaded || !audio.duration || audio.paused || SLEEP.eos || SLEEP.fading) return;
+  const xf = VOL_OK ? xfadeSecs() : 0, lead = xf ? Math.min(xf, audio.duration / 3) : 0.4;   // no fade: start the next one just before the end, so there is no gap
   if (audio.duration - audio.currentTime > lead) return;
   xfKey = loaded; const nq = nextReadyQid(); if (nq == null) return;
-  const from = S.current; pendingAdvance = true; crossfadeTo(nq, VOL_OK ? lead : 0, true);
+  const from = S.current; pendingAdvance = true; crossfadeTo(nq, xf ? lead : 0, true);
   act('/api/queue/next', 'POST', {from}).finally(() => { pendingAdvance = false; syncPlayer(); });
 }
 function renderPlayer() {
@@ -711,19 +1308,74 @@ function renderPlayer() {
   root.setProperty('--bottom', `calc(var(--nav-h) + var(--safe-b) + ${(on ? 78 : 0) + (pvOn ? 68 : 0)}px)`);
   root.setProperty('--pvb', `calc(var(--nav-h) + var(--safe-b) + ${on ? 76 : 6}px)`);
   if (pvOn) { $('#pvTitle').textContent = pvR.title; $('#pvPlay').innerHTML = I(pv.paused ? 'play' : 'pause'); $('#pvClose').innerHTML = I('x'); }
-  if (!s) { closeNP(); return; }
+  if (!s) { closeNP(); if (LY.open) closeLyrics(); return; }
   const q = S.queue.find(x => x.qid === S.current);
   if ($('#mArt').dataset.id !== q.song_id) { $('#mArt').dataset.id = q.song_id; $('#mArt').src = thumbOf(q.song_id); $('#npArt').src = thumbOf(q.song_id); }
   $('#mTitle').textContent = s.title; $('#mSub').textContent = s.channel || ''; $('#npTitle').textContent = s.title; $('#npSub').textContent = s.channel || '';
   const ic = I(audio.paused ? 'play' : 'pause');
-  $('#mPlay').innerHTML = ic; $('#npPlay').innerHTML = ic; $('#mNext').innerHTML = I('next'); $('#npNext').innerHTML = I('next'); $('#npQueue').innerHTML = I('queue'); $('#npClose').innerHTML = I('down');
+  $('#mPlay').innerHTML = ic; $('#npPlay').innerHTML = ic; $('#mNext').innerHTML = I('next'); $('#npNext').innerHTML = I('next'); $('#npQueue').innerHTML = I('queue'); $('#npClose').innerHTML = I('down'); $('#npLyrics').innerHTML = I('lyrics'); sleepPaint();
   $('#mPlay').hidden = $('#mNext').hidden = GUEST;
+  if (LY.open) { $('#lyPlay').innerHTML = ic; if (LY.id !== s.id) loadLyrics(s); }
 }
 const togglePlay = () => audio.paused ? audio.play() : audio.pause();
-const skip = () => act('/api/queue/next', 'POST', {from: S.current});
+const skip = () => { nextFx(); return act('/api/queue/next', 'POST', {from: S.current}); };
+// the tap on "next" is confirmed with a flash and a short vibration; the queue card is redrawn when the song changes,
+// so the new button picks the animation up where it was (negative delay)
+let nextFxAt = -1e9;
+const nextFxClass = () => performance.now() - nextFxAt < 500 ? ' fx' : '';
+const nextFxStyle = () => nextFxClass() ? ` style="animation-delay:-${Math.round(performance.now() - nextFxAt)}ms"` : '';
+function nextFx() {
+  nextFxAt = performance.now(); try { navigator.vibrate?.(15); } catch {}
+  document.querySelectorAll('.nextb').forEach(b => { b.classList.remove('fx'); b.style.animationDelay = ''; void b.offsetWidth; b.classList.add('fx'); });
+  setTimeout(() => document.querySelectorAll('.nextb.fx').forEach(b => b.classList.remove('fx')), 520);
+}
+// ---------- sleep timer: stops the music after n minutes, or when the song ends, fading it out ----------
+const SLEEP = {at:0, eos:false, fading:false, hold:false};
+const SLEEP_FADE = 10;   // seconds of fade out
+const sleepOn = () => !!(SLEEP.at || SLEEP.eos);
+const sleepLeft = () => SLEEP.eos ? null : Math.max(0, Math.ceil((SLEEP.at - Date.now()) / 60000));
+const sleepIcon = () => I('moon') + (SLEEP.eos ? '<span class="left">fi</span>' : SLEEP.at ? `<span class="left">${sleepLeft()}'</span>` : '');
+const sleepChip = () => I('moon') + (SLEEP.eos ? 'Fi de la cançó' : SLEEP.at ? `${sleepLeft()} min` : 'Temporitzador');
+function sleepOff() { SLEEP.at = 0; SLEEP.eos = false; SLEEP.fading = false; sleepPaint(); }
+function sleepPaint() {
+  const n = $('#npSleep'), c = $('[data-act=sleep]');
+  if (n) { n.classList.toggle('on', sleepOn()); n.innerHTML = sleepIcon(); }
+  if (c) { c.classList.toggle('on', sleepOn()); c.innerHTML = sleepChip(); }
+}
+async function sleepMenu() {
+  const now = sleepOn() ? (SLEEP.eos ? 'Aturarà la música quan acabi aquesta cançó' : `Aturarà la música d'aquí ${sleepLeft()} min`) : 'Atura la música automàticament';
+  const v = await menu({title:'Temporitzador', sub:now, items:[
+    ...[5, 15, 30, 45, 60, 90].map(n => ({v:String(n), icon:'moon', label:`D'aquí ${n} minuts`})),
+    {v:'eos', icon:'music', label:'Quan acabi aquesta cançó'},
+    ...(sleepOn() ? [{v:'off', icon:'x', label:'Desactiva el temporitzador', danger:true}] : [])]});
+  if (!v) return;
+  if (v === 'off') { sleepOff(); return toast('Temporitzador desactivat'); }
+  SLEEP.fading = false; SLEEP.eos = v === 'eos'; SLEEP.at = SLEEP.eos ? 0 : Date.now() + +v * 60000; sleepPaint();
+  toast(SLEEP.eos ? "La música s'aturarà quan acabi la cançó" : `La música s'aturarà d'aquí ${v} minuts`);
+}
+function sleepCheck() {
+  if (!sleepOn()) return;
+  if (!SLEEP.eos) sleepPaint();   // the minutes left on the button
+  if (SLEEP.fading || audio.paused) return;
+  const left = SLEEP.eos ? (audio.duration ? audio.duration - audio.currentTime : Infinity) : (SLEEP.at - Date.now()) / 1000;
+  if (left > (VOL_OK ? SLEEP_FADE : 0.6)) return;
+  SLEEP.fading = true; finishFade();
+  const el = audio, eos = SLEEP.eos, t0 = performance.now(), dur = Math.max(left, .3) * 1000;
+  const stop = () => {
+    el.pause(); el.volume = 1; sleepOff(); toast("Bona nit! La música s'ha aturat");
+    if (eos) { SLEEP.hold = true; act('/api/queue/next', 'POST', {from: loaded}); }   // the next song is ready, but waits for ▶
+  };
+  if (!VOL_OK) return stop();   // iOS: no volume control, just stop
+  const t = setInterval(() => {
+    const p = Math.min(1, (performance.now() - t0) / dur); el.volume = Math.cos(p * Math.PI / 2);
+    if (p >= 1 || el !== audio) { clearInterval(t); stop(); }
+  }, 50);
+}
+setInterval(sleepCheck, 1000);
 $('#mPlay').onclick = togglePlay; $('#npPlay').onclick = togglePlay; $('#mNext').onclick = skip; $('#npNext').onclick = skip;
 function openNP() { if (GUEST) return; $('#np').classList.add('on'); $('#np').setAttribute('aria-hidden', 'false'); }
 function closeNP() { $('#np').classList.remove('on'); $('#np').setAttribute('aria-hidden', 'true'); }
+$('#npSleep').onclick = sleepMenu;
 $('#mInfo').onclick = openNP; $('#mArt').onclick = openNP; $('#npClose').onclick = closeNP;
 $('#npQueue').onclick = () => { closeNP(); tab = 'queue'; render(); scrollTo(0, 0); };
 // seek bar inside the queue view (same as the one in "Ara sona")
@@ -742,14 +1394,21 @@ for (const el of [a1, a2]) {   // events of the element that is fading out are i
     if (el !== audio || !audio.duration) return; const p = audio.currentTime / audio.duration * 100;
     $('#mProg').style.width = p + '%';
     if (!seeking) { $('#seek').value = p * 10; $('#seek').style.setProperty('--p', p + '%'); $('#tCur').textContent = fmt(audio.currentTime); }
-    $('#tDur').textContent = fmt(audio.duration); maybeCrossfade();
+    $('#tDur').textContent = fmt(audio.duration); sleepCheck(); maybeCrossfade(); setPos();
     const qs = $('#qSeek');
     if (qs && !seeking) { qs.value = p * 10; qs.style.setProperty('--p', p + '%'); $('#qCur').textContent = fmt(audio.currentTime); $('#qRem').textContent = '-' + fmt(audio.duration - audio.currentTime); }
   });
-  el.addEventListener('ended', () => { if (el === audio && !pendingAdvance) act('/api/queue/next', 'POST', {from: loaded}); });
+  el.addEventListener('ended', () => {
+    if (el !== audio || pendingAdvance) return;
+    if (SLEEP.eos) { sleepOff(); SLEEP.hold = true; toast("Bona nit! La música s'ha aturat"); }   // next song loaded, not playing
+    act('/api/queue/next', 'POST', {from: loaded});
+  });
   el.addEventListener('error', () => { if (el === audio && loaded != null && el.getAttribute('src') && el.getAttribute('src') !== SILENT) { toast('No es pot reproduir aquesta cançó, la salto'); act('/api/queue/next', 'POST', {from: loaded}); } });
-  el.addEventListener('play', () => { if (el !== audio) return; if (pvR) stopPreview(); renderPlayer(); const b = $('[data-act=nptoggle]'); if (b) b.innerHTML = I('pause'); requestAwake(); document.querySelectorAll('.eq').forEach(x => x.classList.remove('paused')); });
-  el.addEventListener('pause', () => { if (el !== audio) return; if (fadeState) fadeState.old.pause(); renderPlayer(); const b = $('[data-act=nptoggle]'); if (b) b.innerHTML = I('play'); if (!el.ended) releaseAwake(); document.querySelectorAll('.eq').forEach(x => x.classList.add('paused')); });
+  el.addEventListener('loadedmetadata', () => { if (el === audio) setPos(true); });
+  el.addEventListener('seeked', () => { if (el === audio) setPos(true); });   // seek bar, lyrics, "repeat the phrase"
+  el.addEventListener('playing', () => { if (el === audio) setPos(true); });   // back from buffering
+  el.addEventListener('play', () => { if (el !== audio) return; if (pvR) stopPreview(); if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing'; setPos(true); renderPlayer(); const b = $('[data-act=nptoggle]'); if (b) b.innerHTML = I('pause'); requestAwake(); document.querySelectorAll('.eq').forEach(x => x.classList.remove('paused')); });
+  el.addEventListener('pause', () => { if (el !== audio) return; if (fadeState) fadeState.old.pause(); if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused'; setPos(true); renderPlayer(); const b = $('[data-act=nptoggle]'); if (b) b.innerHTML = I('play'); if (!el.ended) releaseAwake(); document.querySelectorAll('.eq').forEach(x => x.classList.add('paused')); });
 }
 async function requestAwake() {   // keep the phone awake while playing
   if ('wakeLock' in navigator) { try { wl = await navigator.wakeLock.request('screen'); wl.addEventListener('release', () => wl = null); return; } catch {} }
@@ -757,10 +1416,136 @@ async function requestAwake() {   // keep the phone awake while playing
 }
 function releaseAwake() { try { wl?.release(); } catch {} wl = null; $('#ns').pause(); }
 document.addEventListener('visibilitychange', () => { if (!document.hidden && !audio.paused) requestAwake(); });
+// Controls from the lock screen, headphones, the steering wheel and CarPlay (the PWA shows in CarPlay's "Now Playing").
+// No seekbackward/seekforward: on iOS they would replace the next/previous buttons.
 if ('mediaSession' in navigator && !GUEST) {
-  navigator.mediaSession.setActionHandler('play', () => audio.play()); navigator.mediaSession.setActionHandler('pause', () => audio.pause());
-  navigator.mediaSession.setActionHandler('nexttrack', skip);
+  const ms = navigator.mediaSession, on = (a, f) => { try { ms.setActionHandler(a, f); } catch {} };
+  on('play', () => { if (audio.getAttribute('src') && audio.getAttribute('src') !== SILENT) audio.play(); else if (S.current != null) startOn(audio, S.current); });
+  on('pause', () => audio.pause());
+  on('stop', () => audio.pause());
+  on('nexttrack', skip);
+  on('previoustrack', () => { audio.currentTime = 0; setPos(true); });   // played songs leave the queue: "previous" restarts the song
+  on('seekto', e => { if (!audio.duration) return; audio.currentTime = Math.min(e.seekTime, audio.duration - .1); setPos(true); });
 }
+
+// ---------- lyrics: read along while it plays. Synced lyrics follow the song: tap a line to jump there,
+// "repeat" loops the phrase (to learn a language). They come from LRCLIB and are kept on the phone for offline. ----------
+const LANGS = {en:'Anglès', es:'Castellà', ca:'Català', fr:'Francès', it:'Italià', pt:'Portuguès', de:'Alemany'};
+const LY = {open:false, id:null, data:null, lines:[], cur:-1, loopI:null, touched:0, seq:0, timer:null, pick:false, offT:null};
+const lyStore = {
+  get: id => { try { return JSON.parse(localStorage.getItem('ly:' + id)); } catch { return null; } },
+  put: d => { try { if (d.plain || d.synced) localStorage.setItem('ly:' + d.id, JSON.stringify(d)); } catch {} },
+};
+function parseLrc(text) {
+  const out = [];
+  for (const l of (text || '').split('\n')) {
+    const stamps = [...l.matchAll(/\[(\d+):(\d+(?:\.\d+)?)\]/g)], x = l.replace(/\[[^\]]*\]/g, '').trim();
+    for (const m of stamps) out.push({t: +m[1] * 60 + +m[2], x});
+  }
+  return out.sort((a, b) => a.t - b.t);
+}
+function openLyrics() {
+  if (GUEST) return; const s = songOfQ(S.current); if (!s) return toast('No sona cap cançó');
+  LY.open = true; $('#ly').classList.add('on'); $('#ly').setAttribute('aria-hidden', 'false');
+  try { $('#ly').classList.toggle('big', localStorage.getItem('lyBig') === '1'); } catch {}
+  clearInterval(LY.timer); LY.timer = setInterval(lySync, 150);
+  if (LY.id !== s.id) loadLyrics(s); else { renderLyrics(); lySync(true); }
+}
+function closeLyrics() { LY.open = false; LY.loopI = null; LY.pick = false; clearInterval(LY.timer); $('#ly').classList.remove('on'); $('#ly').setAttribute('aria-hidden', 'true'); }
+async function loadLyrics(s, q = '') {
+  const my = ++LY.seq; LY.id = s.id; LY.cur = -1; LY.loopI = null; LY.lines = []; LY.pick = false;
+  LY.data = q ? {...LY.data, loading:true} : (lyStore.get(s.id) || {loading:true}); renderLyrics();
+  if (!LY.data.loading && !q) return lySync(true);
+  if (OFFLINE) { LY.data = {offline:true}; return renderLyrics(); }
+  try {
+    const d = await api(`/api/lyrics?id=${encodeURIComponent(s.id)}${q ? '&q=' + encodeURIComponent(q) : ''}`);
+    if (my !== LY.seq) return;
+    LY.data = d; lyStore.put(d);
+    if (d.missed) toast('No he trobat aquesta lletra');
+  } catch { if (my === LY.seq) LY.data = {error:true}; }
+  if (my === LY.seq) { renderLyrics(); lySync(true); }
+}
+function renderLyrics() {
+  const s = S.songs[LY.id] || {}, d = LY.data || {}, b = $('#lyBody');
+  $('#lyClose').innerHTML = I('down'); $('#lyBig').innerHTML = I('size'); $('#lyBack').innerHTML = I('back') + '<span class="k">5s</span>';
+  $('#lyLoop').innerHTML = I('loop'); $('#lyPlay').innerHTML = I(audio.paused ? 'play' : 'pause');
+  $('#lyTitle').textContent = d.title || s.title || '';
+  $('#lySub').innerHTML = esc(d.artist || s.channel || '') + (d.lang && LANGS[d.lang] ? `<span class="lang">${LANGS[d.lang]}</span>` : '');
+  LY.lines = d.synced ? parseLrc(d.synced) : [];
+  const synced = LY.lines.length > 0, has = synced || !!d.plain;
+  $('#lyCtrl').hidden = $('#lySync').hidden = !synced; $('#lyLoop').classList.toggle('on', LY.loopI != null); lyOffPaint();
+  b.className = synced ? 'synced' + (LY.pick ? ' pick' : '') : has ? 'plain' : 'none';
+  const again = `<div class="lysrc">${has ? 'No és aquesta lletra?' : ''} Escriu l'artista i el títol:</div>
+    <form class="lyform" id="lyForm"><input class="sinput" id="lyQ" placeholder="Artista - Títol" value="${esc(has ? '' : [d.artist, d.title].filter(Boolean).join(' - '))}" autocomplete="off"><button class="jbtn">Cerca</button></form>`;
+  if (d.loading) b.innerHTML = `<div class="searching" role="status"><span class="spin"></span><span class="dots">Buscant la lletra</span></div>`;
+  else if (d.offline) b.innerHTML = `<div class="lysrc">Sense connexió. Les lletres que ja has obert es poden llegir sense connexió.</div>`;
+  else if (d.error) b.innerHTML = `<div class="lysrc">No s'ha pogut carregar la lletra. <button class="link" id="lyRetry">Torna-ho a provar</button></div>`;
+  else if (!has) b.innerHTML = `<div class="lysrc">No he trobat la lletra d'aquesta cançó.</div>${again}`;
+  else b.innerHTML = (synced
+      ? LY.lines.map((l, i) => `<div class="ll" data-i="${i}">${esc(l.x) || '♪'}</div>`).join('')
+      : d.plain.split('\n').map(l => l.trim() ? `<div class="ll">${esc(l)}</div>` : '<div class="ll gap"></div>').join(''))
+    + `<div class="lysrc">${synced ? 'Toca una frase per anar-hi. Amb ' + I('loop', 'sm') + ' es repeteix la frase que sona.<br>' : ''}Lletra de LRCLIB.</div>${again}`;
+  b.scrollTop = 0;
+}
+// when line i starts in this video: the LRC time moved by the song's offset (videos often have a longer intro)
+function lyT(i) { return LY.lines[i].t + (LY.data?.offset || 0); }
+function lyLine(t) { let i = -1; for (let k = 0; k < LY.lines.length && lyT(k) <= t; k++) i = k; return i; }
+function lyOffPaint() {
+  const off = LY.data?.offset || 0;
+  $('#lyOff').textContent = LY.pick ? 'Toca la frase que sona' : off ? `Lletra ${off > 0 ? '+' : '−'}${Math.abs(off).toFixed(1).replace('.', ',')} s` : 'Sincronitza';
+  $('#lyOff').classList.toggle('on', LY.pick); $('#lyBody').classList.toggle('pick', LY.pick);
+}
+function lySetOff(off) {   // kept on the phone at once, on the server a moment later (taps come in bursts)
+  off = Math.round(Math.max(-120, Math.min(120, off)) * 10) / 10;
+  LY.data = {...LY.data, offset: off}; lyStore.put(LY.data); lyOffPaint(); lySync(true);
+  clearTimeout(LY.offT); const id = LY.id;
+  if (!OFFLINE) LY.offT = setTimeout(() => api('/api/lyrics/offset', 'POST', {id, offset: off}).catch(() => {}), 800);
+}
+function lySync(force) {
+  if (!LY.open || !LY.lines.length || songOfQ(S.current)?.id !== LY.id) return;
+  const t = audio.currentTime;
+  if (LY.loopI != null) {   // repeat the phrase: back to its start when the next one begins
+    const a = lyT(LY.loopI), z = LY.loopI + 1 < LY.lines.length ? lyT(LY.loopI + 1) : null;
+    if (t < a - .5 || (z != null ? t >= z - .05 : audio.duration && t >= audio.duration - .3)) { audio.currentTime = Math.max(0, a); return; }
+  }
+  const i = LY.loopI ?? lyLine(t + .2);
+  if (i === LY.cur && !force) return;
+  LY.cur = i;
+  $('#lyBody').querySelectorAll('.ll').forEach((el, k) => { el.classList.toggle('on', k === i); el.classList.toggle('past', k < i); el.classList.toggle('loop', k === LY.loopI); });
+  const el = $(`#lyBody .ll[data-i="${i}"]`);
+  if (el && Date.now() - LY.touched > 3500) {   // the reader scrolled away: leave them for a moment
+    const b = $('#lyBody'); b.scrollTo({top: el.offsetTop - b.offsetTop - b.clientHeight * .35, behavior: force ? 'auto' : 'smooth'});
+  }
+}
+$('#npLyrics').onclick = openLyrics; $('#lyClose').onclick = closeLyrics;
+$('#lyPlay').onclick = togglePlay;
+$('#lyBack').onclick = () => { LY.loopI = null; audio.currentTime = Math.max(0, audio.currentTime - 5); $('#lyLoop').classList.remove('on'); lySync(true); };
+$('#lyLoop').onclick = () => {
+  if (LY.loopI != null) LY.loopI = null; else { LY.loopI = Math.max(0, lyLine(audio.currentTime + .2)); if (audio.paused) audio.play(); }
+  $('#lyLoop').classList.toggle('on', LY.loopI != null); toast(LY.loopI != null ? 'Es repeteix aquesta frase' : 'Ja no es repeteix'); lySync(true);
+};
+$('#lyEarly').onclick = () => lySetOff((LY.data?.offset || 0) - .5);
+$('#lyLate').onclick = () => lySetOff((LY.data?.offset || 0) + .5);
+$('#lyOff').onclick = () => {
+  LY.pick = !LY.pick; LY.touched = 0; lyOffPaint();
+  if (LY.pick) { if (audio.paused) audio.play(); toast('Quan sentis una frase, toca-la a la lletra'); }
+};
+$('#lyBig').onclick = () => { const on = $('#ly').classList.toggle('big'); try { localStorage.setItem('lyBig', on ? '1' : '0'); } catch {} lySync(true); };
+for (const ev of ['touchstart', 'wheel']) $('#lyBody').addEventListener(ev, () => { LY.touched = Date.now(); }, {passive:true});
+$('#lyBody').addEventListener('click', e => {
+  if (e.target.id === 'lyRetry') { const s = S.songs[LY.id]; if (s) loadLyrics(s); return; }
+  const el = e.target.closest('.ll[data-i]'); if (!el) return;
+  const i = +el.dataset.i;
+  if (LY.pick) {   // "this is the line playing now" (people tap a little after hearing it start)
+    LY.pick = false; lySetOff(audio.currentTime - .3 - LY.lines[i].t); return toast('Lletra sincronitzada');
+  }
+  if (LY.loopI != null) LY.loopI = i;
+  audio.currentTime = Math.max(0, lyT(i)); LY.touched = 0; if (audio.paused) audio.play(); lySync(true);
+});
+$('#lyBody').addEventListener('submit', e => {
+  e.preventDefault(); const q = $('#lyQ').value.trim(), s = S.songs[LY.id];
+  if (q && s) { $('#lyQ').blur(); loadLyrics(s, q); }
+});
 
 // ---------- preview: listen to a search result on this device before adding it ----------
 const pv = $('#pv'); let pvR = null;
@@ -775,7 +1560,7 @@ async function previewResult(r) {
     lastSig = ''; poll(); return;
   }
   if (s.status !== 'ready') { pvWait = r; return toast(`Encara es descarrega (${Math.round(s.progress)}%)`); }
-  pvR = r; pv.src = `/media/${r.id}.mp3`; pv.play().catch(() => toast("No s'ha pogut reproduir la prèvia")); renderPlayer();
+  pvR = r; pv.src = `/media/${r.id}.mp3${JQ}`; pv.play().catch(() => toast("No s'ha pogut reproduir la prèvia")); renderPlayer();
 }
 pv.addEventListener('play', () => { renderPlayer(); lastSig = ''; render(); });
 pv.addEventListener('pause', () => { if (!pvR) return; renderPlayer(); lastSig = ''; render(); });
@@ -784,23 +1569,170 @@ pv.addEventListener('timeupdate', () => { if (!pv.duration) return; $('#pvProg')
 $('#pvPlay').onclick = () => { if (!GUEST && !audio.paused && pv.paused) return toast('Atura la cua per escoltar una prèvia'); pv.paused ? pv.play() : pv.pause(); };
 $('#pvClose').onclick = stopPreview;
 
-// ---------- login / boot ----------
-let timer = null;
-function showLogin() {
+// ---------- accounts: log in, sign up (email or Google), profile ----------
+let timer = null, ME = null;   // ME: the logged-in user (name, app name, logo, role, ai)
+const aiAllowed = () => GUEST ? !!S.ai : !!ME?.ai;
+function applyBrand(b) {   // each user chooses the name and logo the app shows
+  if (!b) return;
+  const name = b.app_name || 'coniMIX';
+  $('.logo .mark').src = b.logo || '/static/avatar.jpg';
+  $('.logo span').innerHTML = name === 'coniMIX' ? 'coni<b>MIX</b>' : `<b>${esc(name)}</b>`;
+  document.title = GUEST ? `${name} · Jam` : name;
+  if (GUEST || !b.icon) return;   // "Add to Home Screen" on the iPhone takes this icon and name
+  document.querySelector('link[rel=apple-touch-icon]').href = b.icon;
+  document.querySelector('link[rel=icon]').href = b.icon;
+  document.querySelector('link[rel=manifest]').href = b.manifest;
+  document.querySelector('meta[name=apple-mobile-web-app-title]').content = name;
+}
+async function post(path, body) {   // for the account screens (outside the app's api(): no login redirect)
+  const r = await fetch(path, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body || {})});
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error || 'Error');
+  return j;
+}
+function forgetPhone() {   // another user on this phone: the saved songs and lists were someone else's
+  try { caches.delete(SONG_CACHE); } catch {}
+  for (const k of ['cm-off', 'cm-offlib', 'cm-offq']) try { localStorage.removeItem(k); } catch {}
+  OFF = new Set(); OC.all = false; OC.pls = []; OLIB = {songs:{}, playlists:[]}; LQS = {queue:[], current:null, seq:1};
+}
+function showLogin(mode = 'in') {
   clearInterval(timer); document.body.dataset.login = '1'; audio.pause();
   ['#mini', '#nav'].forEach(s => $(s).style.display = 'none'); $('#qrBtn').hidden = $('#outBtn').hidden = true;
-  $('#main').innerHTML = `<form class="login" id="lf"><img class="brand" src="/static/logo.jpg" alt="coniMIX"><p class="sub">Inicia la sessió per gestionar la teva música</p>
-    <div class="field"><input type="text" value="propietari" autocomplete="username" hidden>
-    <div class="searchbar" style="margin:0"><input type="password" id="pw" placeholder="Contrasenya" autocomplete="current-password" autocapitalize="off" autocorrect="off" spellcheck="false" required><button type="button" class="x" id="eye" aria-label="Mostra la contrasenya" style="width:40px;height:40px">${I('eye')}</button></div>
-    <label class="chk"><input type="checkbox" id="rem" checked><span>Recorda'm en aquest dispositiu</span></label>
-    <button class="btn pri block">Entra</button><div id="lerr" class="s" style="color:var(--danger);justify-content:center;white-space:normal"></div>
-    <p class="s" style="justify-content:center;white-space:normal;margin:6px 0 0">Per afegir cançons a la festa, escaneja el codi QR de l'amfitrió.</p></div></form>`;
+  const up = mode === 'up';
+  $('#main').innerHTML = `<form class="login" id="lf"><img class="brand" src="/static/logo.jpg" alt="coniMIX">
+    <p class="sub">${up ? 'Crea el teu compte i tindràs la teva pròpia música i llistes' : 'Inicia la sessió per gestionar la teva música'}</p>
+    <div class="field">
+    ${up ? '<input class="sinput" style="margin:0" id="nm" placeholder="Nom" autocomplete="name" maxlength="60">' : ''}
+    <input class="sinput" style="margin:0" type="email" id="em" placeholder="Correu electrònic" autocomplete="email" autocapitalize="off" spellcheck="false" required>
+    <div class="searchbar" style="margin:0"><input type="password" id="pw" placeholder="Contrasenya${up ? ' (mínim 8 caràcters)' : ''}" autocomplete="${up ? 'new-password' : 'current-password'}" autocapitalize="off" autocorrect="off" spellcheck="false" required minlength="${up ? 8 : 1}"><button type="button" class="x" id="eye" aria-label="Mostra la contrasenya" style="width:40px;height:40px">${I('eye')}</button></div>
+    ${up ? '' : `<label class="chk"><input type="checkbox" id="rem" checked><span>Recorda'm en aquest dispositiu</span></label>`}
+    <button class="btn pri block">${up ? 'Crea el compte' : 'Entra'}</button><div id="lerr" class="s" style="color:var(--danger);justify-content:center;white-space:normal"></div>
+    <div id="gbtn" style="display:flex;justify-content:center;min-height:0"></div>
+    <button type="button" class="btn block" id="swap">${up ? 'Ja tinc compte: entra' : 'No tens compte? Registra\'t'}</button>
+    <p class="s" style="justify-content:center;white-space:normal;margin:6px 0 0">Per afegir cançons a una festa, escaneja el codi QR de l'amfitrió.</p></div></form>`;
   $('#eye').onclick = () => { const i = $('#pw'); i.type = i.type === 'password' ? 'text' : 'password'; };
+  $('#swap').onclick = () => showLogin(up ? 'in' : 'up');
   $('#lf').onsubmit = async e => {
     e.preventDefault(); $('#lerr').textContent = '';
-    const r = await fetch('/api/login', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({password:$('#pw').value, remember:$('#rem').checked})});
-    if (r.ok) location.reload(); else $('#lerr').textContent = (await r.json().catch(() => ({}))).error || 'Error';
+    try {
+      if (up) await post('/api/register', {email:$('#em').value, password:$('#pw').value, name:$('#nm').value});
+      else await post('/api/login', {email:$('#em').value, password:$('#pw').value, remember:$('#rem').checked});
+      location.reload();
+    } catch (err) { $('#lerr').textContent = err.message; }
   };
+  googleButton();
+}
+async function googleButton() {   // "Sign in with Google", when the server has a Google client id
+  let cfg = {}; try { cfg = await (await fetch('/api/config')).json(); } catch {}
+  if (!cfg.google_client_id || !$('#gbtn')) return;
+  if (!window.google?.accounts) await new Promise(res => { const sc = document.createElement('script'); sc.src = 'https://accounts.google.com/gsi/client'; sc.onload = res; sc.onerror = res; document.head.appendChild(sc); });
+  if (!window.google?.accounts || !$('#gbtn')) return;
+  google.accounts.id.initialize({client_id:cfg.google_client_id, callback: async r => {
+    try { await post('/api/google', {credential:r.credential}); location.reload(); } catch (err) { $('#lerr').textContent = err.message; }
+  }});
+  google.accounts.id.renderButton($('#gbtn'), {theme:'filled_black', size:'large', shape:'pill', text:'continue_with', locale:'ca'});
+}
+function showPending() {
+  clearInterval(timer); document.body.dataset.login = '1';
+  ['#mini', '#nav'].forEach(s => $(s).style.display = 'none'); $('#qrBtn').hidden = true;
+  $('#main').innerHTML = `<div class="login"><img class="brand" src="/static/logo.jpg" alt="coniMIX">
+    <h1 style="font-size:24px">Ja gairebé hi ets, ${esc(ME.name || '')}!</h1>
+    <p class="sub">El teu compte (${esc(ME.email)}) està pendent que l'administrador l'aprovi. Quan ho faci, torna a obrir l'app.</p>
+    <button class="btn pri block" id="pchk">Comprova-ho ara</button></div>`;
+  $('#pchk').onclick = () => location.reload();
+}
+async function logout() {
+  await fetch('/api/logout', {method:'POST', headers:{'Content-Type':'application/json'}, body:'{}'}).catch(() => {});
+  forgetPhone(); location.reload();
+}
+// a logo picked from the phone, made small (512 px: also the home screen icon) before uploading
+const shrinkImage = file => new Promise((res, rej) => {
+  const img = new Image(); img.onload = () => {
+    const n = 512, c = document.createElement('canvas'), k = Math.max(n / img.width, n / img.height);
+    c.width = c.height = n; const x = c.getContext('2d'); const w = img.width * k, h = img.height * k;
+    x.drawImage(img, (n - w) / 2, (n - h) / 2, w, h); URL.revokeObjectURL(img.src); res(c.toDataURL('image/jpeg', .88));
+  }; img.onerror = rej; img.src = URL.createObjectURL(file);
+});
+async function refreshMe() { try { const me = await (await fetch('/api/me', {cache:'no-store'})).json(); if (me.user) { ME = me.user; applyBrand(ME); lsSet('cm-xfade', ME.xfade); } } catch {} }
+function profileSheet() {
+  sheetDone = () => {};
+  openSheet(`<div class="shead"><img class="th" src="${esc(ME.logo)}" alt="" style="border-radius:50%"><div class="mt"><div class="t">${esc(ME.name || ME.email)}</div><div class="s">${esc(ME.email)}${ME.role === 'admin' ? ' · administrador' : ''}</div></div></div>
+    <button class="opt" id="pfApp">${I('edit')}<span>Nom de l'app<small>${esc(ME.app_name)}</small></span></button>
+    <button class="opt" id="pfLogo">${I('music')}<span>Canvia el logo<small>Una foto o imatge del mòbil</small></span></button>
+    ${ME.logo !== '/static/avatar.jpg' ? `<button class="opt" id="pfLogoDel">${I('x')}<span>Torna al logo de coniMIX</span></button>` : ''}
+    <button class="opt" id="pfName">${I('edit')}<span>El teu nom<small>${esc(ME.name || '')}</small></span></button>
+    <button class="opt" id="pfXf">${I('music')}<span>Fosa entre cançons<small>${xfadeSecs() ? `${String(xfadeSecs()).replace('.', ',')} segons` : 'Desactivada'}</small></span></button>
+    <button class="opt" id="pfPw">${I('eye')}<span>${ME.has_password ? 'Canvia la contrasenya' : 'Posa una contrasenya'}<small>${ME.google ? 'També pots entrar amb Google' : ''}</small></span></button>
+    ${ME.role === 'admin' ? `<button class="opt" id="pfAdmin">${I('lists')}<span>Usuaris<small>Aprova, bloqueja i gestiona els comptes</small></span></button>` : ''}
+    <button class="opt dng" id="pfOut">${I('out')}<span>Tanca la sessió<small>Les cançons desades en aquest mòbil s'esborraran</small></span></button>
+    <input type="file" id="pfFile" accept="image/*" hidden>`);
+  const save = async (body, msg) => { try { await api('/api/profile', 'PATCH', body); await refreshMe(); toast(msg); } catch {} };
+  $('#pfApp').onclick = async () => { const v = await input({title:"Nom de l'app", value:ME.app_name, ph:'coniMIX'}); if (v != null) save({app_name:v}, 'Nom canviat'); };
+  $('#pfName').onclick = async () => { const v = await input({title:'El teu nom', value:ME.name || ''}); if (v) save({name:v}, 'Fet'); };
+  $('#pfXf').onclick = xfadeMenu;
+  $('#pfLogo').onclick = () => $('#pfFile').click();
+  $('#pfFile').onchange = async e => {
+    const f = e.target.files[0]; if (!f) return; closeSheet();
+    try { await api('/api/profile/logo', 'POST', {data: await shrinkImage(f)}); await refreshMe(); toast('Logo canviat'); } catch { toast("No s'ha pogut fer servir aquesta imatge"); }
+  };
+  if ($('#pfLogoDel')) $('#pfLogoDel').onclick = async () => { closeSheet(); try { await api('/api/profile/logo', 'DELETE'); await refreshMe(); toast('Logo de coniMIX'); } catch {} };
+  $('#pfPw').onclick = passwordSheet;
+  if ($('#pfAdmin')) $('#pfAdmin').onclick = () => { closeSheet(); tab = 'admin'; viewKey = ''; adminLoad(); scrollTo(0, 0); };
+  $('#pfOut').onclick = async () => { if (await ask({title:'Tancar la sessió?', text:"Les cançons desades en aquest mòbil s'esborraran (al servidor no es toca res).", ok:'Tanca la sessió', danger:true})) logout(); };
+}
+async function xfadeMenu() {
+  const cur = xfadeSecs();
+  const v = await menu({title:'Fosa entre cançons', sub: VOL_OK ? 'La següent cançó entra abans i es fonen' : "A l'iPhone s'encadenen sense fondre",
+    items:[{v:'0', icon: cur === 0 ? 'check' : 'x', label:'Desactivada', sub:'Una cançó comença just quan acaba l\'anterior'},
+      ...[2, 4, 6, 8, 10, 12].map(n => ({v:String(n), icon: cur === n ? 'check' : 'music', label:`${n} segons`, sub: n === 4 ? 'Per defecte' : ''}))]});
+  if (v == null || v === '') return;
+  try { await api('/api/profile', 'PATCH', {xfade:+v}); await refreshMe(); lsSet('cm-xfade', +v); toast(+v ? `Fosa de ${v} segons` : 'Fosa desactivada'); } catch {}
+}
+function passwordSheet() {
+  sheetDone = () => {};
+  openSheet(`<h3>${ME.has_password ? 'Canvia la contrasenya' : 'Posa una contrasenya'}</h3>
+    ${ME.has_password ? '<input class="sinput" type="password" id="pwo" placeholder="Contrasenya actual" autocomplete="current-password">' : ''}
+    <input class="sinput" type="password" id="pwn" placeholder="Contrasenya nova (mínim 8 caràcters)" autocomplete="new-password">
+    <div id="pwe" class="s" style="color:var(--danger);white-space:normal;margin:-6px 0 10px"></div>
+    <div class="btnrow"><button class="btn" data-v="">Cancel·la</button><button class="btn pri" id="pwok">Desa</button></div>`);
+  $('#pwok').onclick = async () => {
+    try { await post('/api/profile/password', {old:$('#pwo')?.value || '', new:$('#pwn').value}); closeSheet(); await refreshMe(); toast('Contrasenya canviada'); }
+    catch (err) { $('#pwe').textContent = err.message; }
+  };
+}
+// ---------- admin: the other users ----------
+let ADM = null;
+async function adminLoad() { try { ADM = await api('/api/admin/users'); } catch { ADM = []; } lastSig = ''; render(); }
+const ago = t => { if (!t) return 'mai'; const d = (Date.now() / 1000 - t) / 86400; return d < 1 / 24 ? 'ara mateix' : d < 1 ? `fa ${Math.round(d * 24)} h` : d < 60 ? `fa ${Math.round(d)} dies` : new Date(t * 1000).toLocaleDateString('ca'); };
+const ST = {pending:['Pendent', '#f5b544'], active:['Actiu', 'var(--acc)'], blocked:['Bloquejat', 'var(--danger)']};
+function viewAdmin() {
+  const us = ADM || [], pend = us.filter(u => u.status === 'pending').length;
+  return {key:'admin', pre:`<button class="back" data-act="admback">${I('left')}Tornar</button><h1 class="title">Usuaris</h1>
+    ${pend ? `<div class="note" style="color:var(--fg)"><b>${pend === 1 ? '1 compte espera' : pend + ' comptes esperen'} que l'aprovis</b></div>` : ''}`,
+    post: !ADM ? '<div class="skel"></div><div class="skel"></div>' : `<div class="list">${us.map(u => `<button class="pcard" data-act="admuser" data-id="${u.id}">
+      <div class="cover" style="border-radius:50%"><img src="${esc(u.logo)}" alt=""></div>
+      <div class="mt"><div class="t">${esc(u.name || u.email)}${u.role === 'admin' ? ' · admin' : ''}</div>
+        <div class="s"><span style="color:${ST[u.status][1]}">${ST[u.status][0]}</span><span>${esc(u.email)}</span></div>
+        <div class="s" style="white-space:normal">${u.songs} cançons · ${u.playlists} llistes · ${fmtMB(u.bytes)} · IA ${u.ai ? 'sí' : 'no'} · ${ago(u.last_seen)}</div></div>${I('right')}</button>`).join('')}</div>`};
+}
+async function adminUser(id) {
+  const u = ADM.find(x => x.id === id); if (!u) return; const self = u.id === ME.id;
+  const items = [
+    ...(u.status !== 'active' ? [{v:'active', icon:'check', label: u.status === 'pending' ? 'Aprova el compte' : 'Desbloqueja'}] : []),
+    {v:'ai', icon:'spark', label: u.ai ? 'Desactiva la IA' : 'Activa la IA', sub:'La cerca i les llistes amb IA es paguen amb la teva clau de Claude'},
+    ...(self ? [] : [{v:'pw', icon:'eye', label:'Contrasenya temporal', sub:'Per si se li ha oblidat: n\'hi dones una de nova'},
+      {v:'role', icon:'lists', label: u.role === 'admin' ? "Treu-li l'administració" : 'Fes-lo administrador'},
+      ...(u.status === 'active' ? [{v:'blocked', icon:'x', label:'Bloqueja', sub:'No podrà entrar fins que el desbloquegis', danger:true}] : []),
+      {v:'del', icon:'trash', label:'Esborra el compte', sub:'Amb totes les seves cançons i llistes', danger:true}])];
+  const v = await menu({title:u.name || u.email, sub:u.email, thumb:u.logo, items}); if (!v) return;
+  const patch = body => api('/api/admin/users/' + id, 'PATCH', body).catch(() => null);
+  if (v === 'active' || v === 'blocked') { if (v === 'blocked' && !await ask({title:`Bloquejar ${u.name || u.email}?`, text:'Se li tancarà la sessió i no podrà entrar.', ok:'Bloqueja', danger:true})) return; await patch({status:v}); toast(v === 'active' ? 'Fet: ja pot fer servir l\'app' : 'Bloquejat'); }
+  else if (v === 'ai') { await patch({ai:!u.ai}); toast(u.ai ? 'IA desactivada' : 'IA activada'); }
+  else if (v === 'role') { await patch({role: u.role === 'admin' ? 'user' : 'admin'}); }
+  else if (v === 'pw') { const r = await api(`/api/admin/users/${id}/password`, 'POST').catch(() => null);
+    if (r) { sheetDone = () => {}; openSheet(`<h3>Contrasenya temporal</h3><p>Dona-li aquesta contrasenya a ${esc(u.name || u.email)}. Després la pot canviar des del seu perfil.</p><div class="note" style="font-size:22px;text-align:center;color:var(--fg);font-family:monospace">${esc(r.password)}</div><div class="btnrow"><button class="btn pri" data-v="">Fet</button></div>`); } }
+  else if (v === 'del' && await ask({title:`Esborrar ${u.name || u.email}?`, text:`Se n'esborraran les ${u.songs} cançons (${fmtMB(u.bytes)}) i les ${u.playlists} llistes. No es pot desfer.`, ok:'Esborra', danger:true})) { await api('/api/admin/users/' + id, 'DELETE').catch(() => {}); toast('Compte esborrat'); }
+  adminLoad();
 }
 function showJamLocked(msg) {
   clearInterval(timer); document.body.dataset.login = '1'; pv.pause();
@@ -820,7 +1752,17 @@ function showJamLocked(msg) {
     const me = await (await fetch('/api/me')).json().catch(() => ({}));
     if (!me.guest) return showJamLocked(joinErr);
   }
-  if (!GUEST) { const me = await (await fetch('/api/me')).json().catch(() => ({})); if (!me.owner) return showLogin(); }
+  if (!GUEST) {
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
+    await offLoad();
+    let me = null; try { const r = await fetchT('/api/me', 6000); if (r.status < 500) me = await r.json(); } catch {}
+    if (!me && OFF.size) { enterOffline(); timer = setInterval(poll, 1500); return; }   // no connection: what is on the phone
+    if (!me?.user) return showLogin();
+    ME = me.user; applyBrand(ME); lsSet('cm-xfade', ME.xfade);
+    if (String(lsGet('cm-uid', '')) !== String(ME.id)) { if (lsGet('cm-uid', '')) forgetPhone(); lsSet('cm-uid', ME.id); }
+    if (ME.status === 'pending') return showPending();
+    if (!me.owner) return showLogin();
+  }
   render(); await poll(); timer = setInterval(poll, 1500);
 })();
 </script>

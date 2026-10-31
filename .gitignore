@@ -1,8 +1,14 @@
-.venv/
-data/
-__pycache__/
-*.pyc
+# secrets and per-machine settings (read by server.py, never in the repo)
+anthropic_api_key.txt
 owner_password.txt
+google_client_id.txt
 public_url.txt
 ffmpeg_path.txt
+
+# database, downloaded songs, logos and log
+data/
+
+.venv/
+__pycache__/
+*.pyc
 .DS_Store
