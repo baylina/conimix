@@ -55,8 +55,15 @@ Actualitza yt-dlp sovint: YouTube bloqueja versions velles (error 403).
     .venv\Scripts\python -m pip install -r requirements.txt yt-dlp imageio-ffmpeg
     .venv\Scripts\python -c "import imageio_ffmpeg;print(imageio_ffmpeg.get_ffmpeg_exe())" > ffmpeg_path.txt
 
-Registra una tasca programada que executi `.venv\Scripts\pythonw.exe server.py` (directori de treball = la carpeta de l'app),
-amb activador "En iniciar el sistema". `pythonw` no obre consola; el registre queda a `data\server.log`.
+Després, en una consola d'**administrador**:
+
+    powershell -ExecutionPolicy Bypass -File install-autostart.ps1
+
+Registra dues tasques programades que funcionen abans d'entrar a Windows (S4U), p. ex. després d'un tall de llum:
+- **coniMIX**: `.venv\Scripts\pythonw.exe server.py` en iniciar el sistema, amb 45 s de retard (arrencat massa d'hora,
+  el servidor pot quedar escoltant el port però penjat). `pythonw` no obre consola; el registre queda a `data\server.log`.
+- **coniMIX Watchdog**: cada 2 minuts executa `watchdog.ps1`, que reinicia la tasca si el servidor no respon
+  (de seguida si no és en marxa, o després de 2 errors seguits). Registre a `data\watchdog.log`.
 
 ## Seguretat
 
